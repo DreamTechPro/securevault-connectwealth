@@ -161,7 +161,7 @@ function AddUserModal({ onClose, onAdd }: { onClose: () => void; onAdd: (u: Omit
     const accNum = `SVB-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
     onAdd({
       name, email, password, role: "user", balance: parseFloat(balance) || 0,
-      accountNumber: accNum, accountStatus: "active", supportMessage: "", btcWallet, profileImage, transactions: [],
+      accountNumber: accNum, accountStatus: "active", supportMessage: "", btcWallet, profileImage, transactions: [], transactionPin: "",
     });
   };
 
