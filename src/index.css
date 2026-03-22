@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 220 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 12%;
+
+    --primary: 220 60% 18%;
+    --primary-foreground: 42 80% 65%;
+
+    --secondary: 220 15% 92%;
+    --secondary-foreground: 220 30% 20%;
+
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 42 80% 55%;
+    --accent-foreground: 220 60% 12%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --frozen: 200 80% 50%;
+    --frozen-foreground: 0 0% 100%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 42 80% 55%;
+
+    --radius: 0.625rem;
+
+    --sidebar-background: 220 60% 12%;
+    --sidebar-foreground: 220 15% 85%;
+    --sidebar-primary: 42 80% 55%;
+    --sidebar-primary-foreground: 220 60% 12%;
+    --sidebar-accent: 220 50% 18%;
+    --sidebar-accent-foreground: 220 15% 90%;
+    --sidebar-border: 220 40% 20%;
+    --sidebar-ring: 42 80% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-lg shadow-black/[0.03];
+  }
+  .gold-gradient {
+    background: linear-gradient(135deg, hsl(42 80% 55%), hsl(38 90% 60%), hsl(42 80% 55%));
+  }
+  .navy-gradient {
+    background: linear-gradient(135deg, hsl(220 60% 12%), hsl(220 50% 20%));
+  }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes progress-fill {
+  from { width: 0; }
+  to { width: 100%; }
+}
