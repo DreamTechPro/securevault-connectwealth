@@ -14,7 +14,7 @@ const Register = () => {
   const { register, login } = useBank();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
