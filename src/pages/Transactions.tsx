@@ -60,7 +60,7 @@ const Transactions = () => {
     setActiveView("withdraw");
   };
 
-  const handleTransfer = (e: React.FormEvent) => {
+  const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -70,33 +70,17 @@ const Transactions = () => {
     if (num > currentUser.balance) { setError("Insufficient balance"); return; }
     if (!recipientEmail.trim() && !accountNumber.trim()) { setError("Please enter the recipient's email or account number"); return; }
 
-    let recipient = null;
-    if (recipientEmail.trim()) {
-      recipient = users.find((u) => u.email === recipientEmail.trim().toLowerCase() && u.id !== currentUser.id);
-    } else if (accountNumber.trim()) {
-      recipient = users.find((u) => u.accountNumber === accountNumber.trim() && u.id !== currentUser.id);
-    }
-
-    if (!recipient) { setError("Recipient not found. Check the email or account number."); return; }
-    if (recipient.accountStatus !== "active") { setError("Recipient account is not active"); return; }
-
-    addTransaction(currentUser.id, {
+    await addTransaction(currentUser.id, {
       type: "debit",
       amount: num,
-      description: `Transfer to ${recipient.name}`,
+      description: description || `Transfer`,
       date: new Date().toISOString().split("T")[0],
       balanceAfter: currentUser.balance - num,
     });
 
-    addTransaction(recipient.id, {
-      type: "credit",
-      amount: num,
-      description: `Transfer from ${currentUser.name}`,
-      date: new Date().toISOString().split("T")[0],
-      balanceAfter: recipient.balance + num,
-    });
+    await refreshCurrentUser();
 
-    setSuccess(`Successfully sent $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })} to ${recipient.name}`);
+    setSuccess(`Successfully sent $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
     resetForm();
     setActiveView("menu");
     setTimeout(() => setSuccess(""), 4000);
