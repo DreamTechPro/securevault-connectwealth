@@ -18,7 +18,8 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, adminOnly }: { children: React.ReactNode; adminOnly?: boolean }) {
-  const { currentUser } = useBank();
+  const { currentUser, loading } = useBank();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="text-muted-foreground">Loading...</div></div>;
   if (!currentUser) return <Navigate to="/" replace />;
   if (adminOnly && currentUser.role !== "admin") return <Navigate to="/dashboard" replace />;
   if (!adminOnly && currentUser.role === "admin") return <Navigate to="/admin" replace />;

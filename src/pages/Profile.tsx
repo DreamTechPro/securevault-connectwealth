@@ -25,7 +25,7 @@ const Profile = () => {
   const initials = currentUser.name.split(" ").map((n) => n[0]).join("").slice(0, 2);
   const hasPin = !!currentUser.transactionPin;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const updates: Record<string, string> = {};
     if (name.trim() && name.trim() !== currentUser.name) updates.name = name.trim();
     if (email.trim() && email.trim() !== currentUser.email) updates.email = email.trim().toLowerCase();
@@ -33,7 +33,7 @@ const Profile = () => {
     if (password.length >= 6) updates.password = password;
 
     if (Object.keys(updates).length > 0) {
-      updateUser(currentUser.id, updates);
+      await updateUser(currentUser.id, updates);
       setSuccess("Profile updated successfully!");
       setTimeout(() => setSuccess(""), 3000);
     }
@@ -57,7 +57,7 @@ const Profile = () => {
       const result = ev.target?.result as string;
       setProfileImage(result);
       if (!editing) {
-        updateUser(currentUser.id, { profileImage: result });
+        void updateUser(currentUser.id, { profileImage: result });
         setSuccess("Profile photo updated!");
         setTimeout(() => setSuccess(""), 3000);
       }
@@ -65,7 +65,7 @@ const Profile = () => {
     reader.readAsDataURL(file);
   };
 
-  const handlePinSave = () => {
+  const handlePinSave = async () => {
     setPinError("");
     if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
       setPinError("PIN must be exactly 4 digits");
@@ -75,7 +75,7 @@ const Profile = () => {
       setPinError("PINs do not match");
       return;
     }
-    updateUser(currentUser.id, { transactionPin: pin });
+    await updateUser(currentUser.id, { transactionPin: pin });
     setShowPinModal(false);
     setPin("");
     setConfirmPin("");

@@ -1,14 +1,15 @@
-import { useState, ReactNode } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { useBank, BankUser, AccountStatus } from "@/contexts/BankContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Plus, Pencil, Trash2, X, History, DollarSign } from "lucide-react";
+import { Pencil, Trash2, X, History, DollarSign, RefreshCw } from "lucide-react";
 
 const AdminDashboard = () => {
-  const { users, updateUser, addTransaction, addUser, deleteUser } = useBank();
+  const { users, updateUser, addTransaction, deleteUser, refreshUsers } = useBank();
   const [editingUser, setEditingUser] = useState<BankUser | null>(null);
-  const [showAddUser, setShowAddUser] = useState(false);
   const [showAddTx, setShowAddTx] = useState<string | null>(null);
+
+  useEffect(() => { refreshUsers(); }, []);
 
   const nonAdminUsers = users.filter((u) => u.role === "user");
 
@@ -20,8 +21,8 @@ const AdminDashboard = () => {
             <h1 className="text-2xl font-semibold text-foreground">Manage Users</h1>
             <p className="text-muted-foreground text-sm mt-1">{nonAdminUsers.length} user accounts</p>
           </div>
-          <button onClick={() => setShowAddUser(true)} className="flex items-center gap-2 h-10 px-4 rounded-lg gold-gradient text-primary font-semibold text-sm hover:opacity-90 active:scale-[0.97] transition-all">
-            <Plus className="w-4 h-4" /> Add User
+          <button onClick={() => refreshUsers()} className="flex items-center gap-2 h-10 px-4 rounded-lg gold-gradient text-primary font-semibold text-sm hover:opacity-90 active:scale-[0.97] transition-all">
+            <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
 
@@ -90,20 +91,15 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Edit User Modal */}
-        {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSave={(updates) => { updateUser(editingUser.id, updates); setEditingUser(null); }} />}
+        {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSave={async (updates) => { await updateUser(editingUser.id, updates); await refreshUsers(); setEditingUser(null); }} />}
 
-        {/* Add User Modal */}
-        {showAddUser && <AddUserModal onClose={() => setShowAddUser(false)} onAdd={(user) => { addUser(user); setShowAddUser(false); }} />}
-
-        {/* Add Transaction Modal */}
-        {showAddTx && <AddTransactionModal userId={showAddTx} onClose={() => setShowAddTx(null)} onAdd={(tx) => { addTransaction(showAddTx, tx); setShowAddTx(null); }} />}
+        {showAddTx && <AddTransactionModal userId={showAddTx} onClose={() => setShowAddTx(null)} onAdd={async (tx) => { await addTransaction(showAddTx, tx); await refreshUsers(); setShowAddTx(null); }} />}
       </div>
     </DashboardLayout>
   );
 };
 
-function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () => void; onSave: (u: Partial<BankUser>) => void }) {
+function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () => void; onSave: (u: Partial<BankUser>) => Promise<void> }) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [balance, setBalance] = useState(user.balance.toString());
@@ -111,11 +107,10 @@ function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () 
   const [supportMsg, setSupportMsg] = useState(user.supportMessage);
   const [btcWallet, setBtcWallet] = useState(user.btcWallet);
   const [profileImage, setProfileImage] = useState(user.profileImage);
-  const [password, setPassword] = useState(user.password);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ name, email, balance: parseFloat(balance) || 0, accountStatus: status, supportMessage: supportMsg, btcWallet, profileImage, password });
+    await onSave({ name, email, balance: parseFloat(balance) || 0, accountStatus: status, supportMessage: supportMsg, btcWallet, profileImage });
   };
 
   return (
@@ -123,7 +118,6 @@ function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field label="Name" value={name} onChange={setName} />
         <Field label="Email" value={email} onChange={setEmail} type="email" />
-        <Field label="Password" value={password} onChange={setPassword} />
         <Field label="Balance ($)" value={balance} onChange={setBalance} type="number" />
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">Account Status</label>
@@ -148,50 +142,15 @@ function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () 
   );
 }
 
-function AddUserModal({ onClose, onAdd }: { onClose: () => void; onAdd: (u: Omit<BankUser, "id" | "createdAt" | "expiresAt">) => void }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("user123");
-  const [balance, setBalance] = useState("0");
-  const [btcWallet, setBtcWallet] = useState("");
-  const [profileImage, setProfileImage] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const accNum = `SVB-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
-    onAdd({
-      name, email, password, role: "user", balance: parseFloat(balance) || 0,
-      accountNumber: accNum, accountStatus: "active", supportMessage: "", btcWallet, profileImage, transactions: [], transactionPin: "",
-    });
-  };
-
-  return (
-    <ModalWrapper onClose={onClose} title="Add New User">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Field label="Full Name" value={name} onChange={setName} required />
-        <Field label="Email" value={email} onChange={setEmail} type="email" required />
-        <Field label="Password" value={password} onChange={setPassword} required />
-        <Field label="Initial Balance ($)" value={balance} onChange={setBalance} type="number" />
-        <Field label="BTC Wallet Address" value={btcWallet} onChange={setBtcWallet} />
-        <Field label="Profile Image URL" value={profileImage} onChange={setProfileImage} placeholder="https://..." />
-        <div className="flex gap-2 pt-2">
-          <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors">Cancel</button>
-          <button type="submit" className="flex-1 h-10 rounded-lg gold-gradient text-primary text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all">Add User</button>
-        </div>
-      </form>
-    </ModalWrapper>
-  );
-}
-
-function AddTransactionModal({ userId, onClose, onAdd }: { userId: string; onClose: () => void; onAdd: (tx: { type: "credit" | "debit"; amount: number; description: string; date: string; balanceAfter: number }) => void }) {
+function AddTransactionModal({ userId, onClose, onAdd }: { userId: string; onClose: () => void; onAdd: (tx: { type: "credit" | "debit"; amount: number; description: string; date: string; balanceAfter: number }) => Promise<void> }) {
   const [type, setType] = useState<"credit" | "debit">("credit");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onAdd({ type, amount: parseFloat(amount) || 0, description, date, balanceAfter: 0 });
+    await onAdd({ type, amount: parseFloat(amount) || 0, description, date, balanceAfter: 0 });
   };
 
   return (

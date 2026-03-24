@@ -11,10 +11,10 @@ const Register = () => {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState(false);
-  const { addUser, login, users } = useBank();
+  const { register, login } = useBank();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -30,32 +30,19 @@ const Register = () => {
       setError("Passwords do not match");
       return;
     }
-    const normalizedEmail = email.trim().toLowerCase();
-    if (users.some((u) => u.email === normalizedEmail)) {
-      setError("An account with this email already exists");
-      return;
-    }
-
     try {
-      addUser({
-        name: name.trim(),
-        email: normalizedEmail,
-        role: "user",
-        password,
-        balance: 0,
-        accountNumber: `SVB-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-        accountStatus: "active",
-        supportMessage: "",
-        btcWallet: "",
-        profileImage: "",
-        transactions: [],
-        transactionPin: "",
-      });
+      const normalizedEmail = email.trim().toLowerCase();
+      const result = await register(normalizedEmail, password, name.trim());
+      if (!result.success) {
+        setError(result.error || "Registration failed. Please try again.");
+        return;
+      }
 
       setCreated(true);
 
-      setTimeout(() => {
-        const success = login(normalizedEmail, password);
+      // Auto-login after a brief delay
+      setTimeout(async () => {
+        const success = await login(normalizedEmail, password);
         if (success) {
           navigate("/dashboard", { replace: true });
         } else {

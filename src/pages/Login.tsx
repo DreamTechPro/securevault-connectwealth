@@ -8,13 +8,13 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
-  const { login } = useBank();
+  const { login, loading } = useBank();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const success = login(email, password);
+    const success = await login(email, password);
     if (success) {
       navigate("/dashboard");
     } else {
