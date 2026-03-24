@@ -27,8 +27,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const isAdmin = currentUser?.role === "admin";
   const links = isAdmin ? adminLinks : userLinks;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
