@@ -14,16 +14,128 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          account_number: string
+          account_status: string
+          balance: number
+          btc_wallet: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          name: string
+          profile_image: string
+          support_message: string
+          transaction_pin: string
+          user_id: string
+        }
+        Insert: {
+          account_number: string
+          account_status?: string
+          balance?: number
+          btc_wallet?: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          name: string
+          profile_image?: string
+          support_message?: string
+          transaction_pin?: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string
+          account_status?: string
+          balance?: number
+          btc_wallet?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          name?: string
+          profile_image?: string
+          support_message?: string
+          transaction_pin?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          date: string
+          description: string
+          id: string
+          profile_id: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          balance_after?: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          profile_id: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          profile_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +262,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
