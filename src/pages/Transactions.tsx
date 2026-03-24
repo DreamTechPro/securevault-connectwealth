@@ -14,7 +14,7 @@ const paymentMethods: { key: PaymentMethod; label: string; icon: typeof Building
 ];
 
 const Transactions = () => {
-  const { currentUser, users, addTransaction } = useBank();
+  const { currentUser, addTransaction, refreshCurrentUser } = useBank();
   const [activeView, setActiveView] = useState<"menu" | "withdraw" | "transfer">("menu");
   const [showWithdrawFeeModal, setShowWithdrawFeeModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
