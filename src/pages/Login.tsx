@@ -23,12 +23,19 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setError("");
-    const success = await login(email, password);
-    if (success) {
-      navigate("/dashboard");
-    } else {
-      setError("Invalid email or password");
+    setSubmitting(true);
+    try {
+      const success = await login(email, password);
+      if (!success) {
+        setError("Invalid email or password");
+      }
+      // Navigation handled by auth state change + redirect above
+    } catch {
+      setError("Login failed. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
