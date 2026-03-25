@@ -194,7 +194,7 @@ const Transactions = () => {
             </div>
             <div className="p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
               <p className="text-sm text-foreground">
-                Please complete the 5% withdrawal fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your withdrawal.
+                Please complete the 1% withdrawal fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your withdrawal.
               </p>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
