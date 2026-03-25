@@ -194,7 +194,7 @@ const Transactions = () => {
             </div>
             <div className="p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
               <p className="text-sm text-foreground">
-                Please complete the 5% withdrawal fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your withdrawal.
+                Please complete the 1% withdrawal fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your withdrawal.
               </p>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
@@ -223,7 +223,7 @@ const Transactions = () => {
 
               <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-6">
                 <p className="text-sm text-foreground leading-relaxed">
-                  Hello, your payment of <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been successfully processed. A <strong>5% withdrawal fee</strong> of <strong>${(currentUser.balance * 0.05).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> is required to complete the transaction.
+                  Hello, your payment of <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been successfully processed. A <strong>1% withdrawal fee</strong> of <strong>${(currentUser.balance * 0.01).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> is required to complete the transaction.
                 </p>
               </div>
 
