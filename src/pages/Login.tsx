@@ -106,8 +106,8 @@ const Login = () => {
                 </button>
               </div>
             </div>
-            <button type="submit" className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
-              Sign In
+            <button type="submit" disabled={submitting} className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60">
+              {submitting ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
