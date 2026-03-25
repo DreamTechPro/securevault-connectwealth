@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
 
 export type AccountStatus = "active" | "frozen" | "disabled";
 
@@ -14,8 +14,8 @@ export interface Transaction {
 }
 
 export interface BankUser {
-  id: string; // profile id
-  userId: string; // auth user id
+  id: string;
+  userId: string;
   name: string;
   email: string;
   role: "admin" | "user";
@@ -48,29 +48,8 @@ interface BankContextType {
 
 const BankContext = createContext<BankContextType | null>(null);
 
-async function fetchProfileWithRole(userId: string): Promise<BankUser | null> {
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
-
-  if (!profile) return null;
-
-  const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .single();
-
-  const { data: txData } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("profile_id", profile.id)
-    .order("created_at", { ascending: true });
-
-  const role = roleData?.role || "user";
-  const transactions: Transaction[] = (txData || []).map((t) => ({
+function mapTransactions(txData: any[]): Transaction[] {
+  return (txData || []).map((t) => ({
     id: t.id,
     type: t.type as "credit" | "debit",
     amount: Number(t.amount),
@@ -78,7 +57,9 @@ async function fetchProfileWithRole(userId: string): Promise<BankUser | null> {
     date: t.date,
     balanceAfter: Number(t.balance_after),
   }));
+}
 
+function mapProfile(profile: any, role: string, transactions: Transaction[]): BankUser {
   return {
     id: profile.id,
     userId: profile.user_id,
@@ -96,6 +77,30 @@ async function fetchProfileWithRole(userId: string): Promise<BankUser | null> {
     createdAt: profile.created_at,
     expiresAt: profile.expires_at,
   };
+}
+
+async function fetchProfileWithRole(userId: string): Promise<BankUser | null> {
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (profileError || !profile) return null;
+
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .single();
+
+  const { data: txData } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("profile_id", profile.id)
+    .order("created_at", { ascending: true });
+
+  return mapProfile(profile, roleData?.role || "user", mapTransactions(txData || []));
 }
 
 async function fetchAllUsers(): Promise<BankUser[]> {
@@ -122,23 +127,7 @@ async function fetchAllUsers(): Promise<BankUser[]> {
     txMap.set(t.profile_id, list);
   });
 
-  return profiles.map((p) => ({
-    id: p.id,
-    userId: p.user_id,
-    name: p.name,
-    email: p.email,
-    role: (roleMap.get(p.user_id) || "user") as "admin" | "user",
-    balance: Number(p.balance),
-    accountNumber: p.account_number,
-    accountStatus: p.account_status as AccountStatus,
-    supportMessage: p.support_message,
-    btcWallet: p.btc_wallet,
-    profileImage: p.profile_image,
-    transactionPin: p.transaction_pin,
-    transactions: txMap.get(p.id) || [],
-    createdAt: p.created_at,
-    expiresAt: p.expires_at,
-  }));
+  return profiles.map((p) => mapProfile(p, roleMap.get(p.user_id) || "user", txMap.get(p.id) || []));
 }
 
 export function BankProvider({ children }: { children: ReactNode }) {
@@ -147,12 +136,21 @@ export function BankProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<BankUser[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadUserData = useCallback(async (userId: string) => {
+    const u = await fetchProfileWithRole(userId);
+    setCurrentUser(u);
+    if (u?.role === "admin") {
+      const all = await fetchAllUsers();
+      setUsers(all);
+    }
+    return u;
+  }, []);
+
   const refreshCurrentUser = useCallback(async () => {
     const { data: { session: s } } = await supabase.auth.getSession();
     if (!s?.user) { setCurrentUser(null); return; }
-    const u = await fetchProfileWithRole(s.user.id);
-    setCurrentUser(u);
-  }, []);
+    await loadUserData(s.user.id);
+  }, [loadUserData]);
 
   const refreshUsers = useCallback(async () => {
     const all = await fetchAllUsers();
@@ -160,37 +158,36 @@ export function BankProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
+    let mounted = true;
+
+    // First restore session from storage
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      if (!mounted) return;
       setSession(s);
       if (s?.user) {
-        const u = await fetchProfileWithRole(s.user.id);
-        setCurrentUser(u);
-        if (u?.role === "admin") {
-          const all = await fetchAllUsers();
-          setUsers(all);
-        }
+        await loadUserData(s.user.id);
+      }
+      if (mounted) setLoading(false);
+    });
+
+    // Then listen for subsequent auth changes (sign in/out)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (!mounted) return;
+      setSession(s);
+      if (s?.user) {
+        // Fire and forget — don't await inside callback to avoid deadlocks
+        loadUserData(s.user.id);
       } else {
         setCurrentUser(null);
         setUsers([]);
       }
-      setLoading(false);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      setSession(s);
-      if (s?.user) {
-        const u = await fetchProfileWithRole(s.user.id);
-        setCurrentUser(u);
-        if (u?.role === "admin") {
-          const all = await fetchAllUsers();
-          setUsers(all);
-        }
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [loadUserData]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -232,13 +229,11 @@ export function BankProvider({ children }: { children: ReactNode }) {
       await supabase.from("profiles").update(dbUpdates).eq("id", profileId);
     }
 
-    // Refresh data
     await refreshCurrentUser();
     if (currentUser?.role === "admin") await refreshUsers();
   };
 
   const addTransaction = async (profileId: string, tx: Omit<Transaction, "id">) => {
-    // Get current balance
     const { data: profile } = await supabase.from("profiles").select("balance").eq("id", profileId).single();
     if (!profile) return;
 
@@ -261,11 +256,6 @@ export function BankProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteUser = async (profileId: string) => {
-    // Get user_id from profile to delete auth user
-    const { data: profile } = await supabase.from("profiles").select("user_id").eq("id", profileId).single();
-    if (!profile) return;
-
-    // Delete profile (cascade will handle transactions and roles)
     await supabase.from("profiles").delete().eq("id", profileId);
     await refreshUsers();
   };

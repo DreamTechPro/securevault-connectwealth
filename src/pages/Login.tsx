@@ -8,17 +8,34 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
-  const { login, loading } = useBank();
+  const [submitting, setSubmitting] = useState(false);
+  const { login, loading, currentUser } = useBank();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  if (!loading && currentUser) {
+    if (currentUser.role === "admin") {
+      navigate("/admin", { replace: true });
+    } else {
+      navigate("/dashboard", { replace: true });
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setError("");
-    const success = await login(email, password);
-    if (success) {
-      navigate("/dashboard");
-    } else {
-      setError("Invalid email or password");
+    setSubmitting(true);
+    try {
+      const success = await login(email, password);
+      if (!success) {
+        setError("Invalid email or password");
+      }
+      // Navigation handled by auth state change + redirect above
+    } catch {
+      setError("Login failed. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -89,8 +106,8 @@ const Login = () => {
                 </button>
               </div>
             </div>
-            <button type="submit" className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
-              Sign In
+            <button type="submit" disabled={submitting} className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60">
+              {submitting ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
