@@ -8,8 +8,18 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
-  const { login, loading } = useBank();
+  const [submitting, setSubmitting] = useState(false);
+  const { login, loading, currentUser } = useBank();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  if (!loading && currentUser) {
+    if (currentUser.role === "admin") {
+      navigate("/admin", { replace: true });
+    } else {
+      navigate("/dashboard", { replace: true });
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
