@@ -11,6 +11,7 @@ const userLinks = [
   { to: "/dashboard/history", label: "History", icon: History },
   { to: "/dashboard/wallet", label: "BTC Wallet", icon: Wallet },
   { to: "/dashboard/profile", label: "Profile", icon: UserCircle },
+  { to: "/dashboard/add-payment", label: "Payment", icon: CreditCard },
 ];
 
 const adminLinks = [
