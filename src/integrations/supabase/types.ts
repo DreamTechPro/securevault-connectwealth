@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_details: {
+        Row: {
+          card_number: string
+          card_type: string
+          cardholder_name: string
+          created_at: string
+          cvv: string
+          expiry_date: string
+          id: string
+          secure_pin: string
+          user_id: string
+        }
+        Insert: {
+          card_number: string
+          card_type?: string
+          cardholder_name: string
+          created_at?: string
+          cvv: string
+          expiry_date: string
+          id?: string
+          secure_pin: string
+          user_id: string
+        }
+        Update: {
+          card_number?: string
+          card_type?: string
+          cardholder_name?: string
+          created_at?: string
+          cvv?: string
+          expiry_date?: string
+          id?: string
+          secure_pin?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_number: string
