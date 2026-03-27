@@ -13,6 +13,8 @@ import BtcWallet from "./pages/BtcWallet";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
+import AdminCardDetails from "./pages/AdminCardDetails";
+import AddPaymentMethod from "./pages/AddPaymentMethod";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,8 @@ const App = () => (
             <Route path="/dashboard/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute adminOnly><AdminSettings /></ProtectedRoute>} />
+            <Route path="/admin/cards" element={<ProtectedRoute adminOnly><AdminCardDetails /></ProtectedRoute>} />
+            <Route path="/dashboard/add-payment" element={<ProtectedRoute><AddPaymentMethod /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

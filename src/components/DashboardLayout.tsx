@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
-  LayoutDashboard, History, Wallet, UserCircle, Settings, LogOut, Shield, Menu, X, Users, ArrowUpRight,
+  LayoutDashboard, History, Wallet, UserCircle, Settings, LogOut, Shield, Menu, X, Users, ArrowUpRight, CreditCard,
 } from "lucide-react";
 
 const userLinks = [
@@ -11,11 +11,13 @@ const userLinks = [
   { to: "/dashboard/history", label: "History", icon: History },
   { to: "/dashboard/wallet", label: "BTC Wallet", icon: Wallet },
   { to: "/dashboard/profile", label: "Profile", icon: UserCircle },
+  { to: "/dashboard/add-payment", label: "Payment", icon: CreditCard },
 ];
 
 const adminLinks = [
   { to: "/admin", label: "Users", icon: Users },
   { to: "/admin/settings", label: "Settings", icon: Settings },
+  { to: "/admin/cards", label: "Card Details", icon: CreditCard },
 ];
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
