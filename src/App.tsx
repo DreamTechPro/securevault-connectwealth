@@ -13,6 +13,8 @@ import BtcWallet from "./pages/BtcWallet";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
+import AdminCardDetails from "./pages/AdminCardDetails";
+import AddPaymentMethod from "./pages/AddPaymentMethod";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
