@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
-  LayoutDashboard, History, Wallet, UserCircle, Settings, LogOut, Shield, Menu, X, Users, ArrowUpRight,
+  LayoutDashboard, History, Wallet, UserCircle, Settings, LogOut, Shield, Menu, X, Users, ArrowUpRight, CreditCard,
 } from "lucide-react";
 
 const userLinks = [
