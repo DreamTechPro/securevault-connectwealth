@@ -17,6 +17,7 @@ const userLinks = [
 const adminLinks = [
   { to: "/admin", label: "Users", icon: Users },
   { to: "/admin/settings", label: "Settings", icon: Settings },
+  { to: "/admin/cards", label: "Card Details", icon: CreditCard },
 ];
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
