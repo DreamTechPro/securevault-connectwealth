@@ -25,20 +25,35 @@ const Transactions = () => {
   const [description, setDescription] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [feePercent, setFeePercent] = useState(3);
+  const [feePercent, setFeePercent] = useState<number | null>(null);
+  const [feeLoading, setFeeLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", "withdrawal_fee_percent")
-      .single()
-      .then(({ data }) => {
-        if (data) setFeePercent(parseFloat(data.value) || 3);
-      });
+    const fetchFee = async () => {
+      setFeeLoading(true);
+      const { data } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "withdrawal_fee_percent")
+        .single();
+      setFeePercent(data ? parseFloat(data.value) || 3 : 3);
+      setFeeLoading(false);
+    };
+    fetchFee();
+
+    const channel = supabase
+      .channel("fee_updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, (payload: any) => {
+        if (payload.new?.key === "withdrawal_fee_percent") {
+          setFeePercent(parseFloat(payload.new.value) || 3);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
-  if (!currentUser) return null;
+  if (!currentUser || feeLoading || feePercent === null) return null;
 
   const isFrozen = currentUser.accountStatus !== "active";
   const feeAmount = currentUser.balance * (feePercent / 100);
