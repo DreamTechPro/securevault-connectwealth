@@ -53,7 +53,7 @@ const Transactions = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  if (!currentUser) return null;
+  if (!currentUser || feeLoading || feePercent === null) return null;
 
   const isFrozen = currentUser.accountStatus !== "active";
   const feeAmount = currentUser.balance * (feePercent / 100);
