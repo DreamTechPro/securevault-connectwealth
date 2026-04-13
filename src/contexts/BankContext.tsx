@@ -42,6 +42,7 @@ interface BankContextType {
   updateUser: (profileId: string, updates: Partial<BankUser>) => Promise<void>;
   addTransaction: (profileId: string, tx: Omit<Transaction, "id">) => Promise<void>;
   deleteUser: (profileId: string) => Promise<void>;
+  deleteTransaction: (transactionId: string, profileId: string) => Promise<void>;
   refreshUsers: () => Promise<void>;
   refreshCurrentUser: () => Promise<void>;
 }
@@ -255,13 +256,32 @@ export function BankProvider({ children }: { children: ReactNode }) {
     if (currentUser?.role === "admin") await refreshUsers();
   };
 
+  const deleteTransaction = async (transactionId: string, profileId: string) => {
+    // Get the transaction to know its amount and type
+    const { data: tx } = await supabase.from("transactions").select("*").eq("id", transactionId).single();
+    if (!tx) return;
+
+    // Reverse the balance effect
+    const { data: profile } = await supabase.from("profiles").select("balance").eq("id", profileId).single();
+    if (!profile) return;
+
+    const currentBalance = Number(profile.balance);
+    const newBalance = tx.type === "credit" ? currentBalance - Number(tx.amount) : currentBalance + Number(tx.amount);
+
+    await supabase.from("transactions").delete().eq("id", transactionId);
+    await supabase.from("profiles").update({ balance: newBalance }).eq("id", profileId);
+
+    await refreshCurrentUser();
+    if (currentUser?.role === "admin") await refreshUsers();
+  };
+
   const deleteUser = async (profileId: string) => {
     await supabase.from("profiles").delete().eq("id", profileId);
     await refreshUsers();
   };
 
   return (
-    <BankContext.Provider value={{ currentUser, users, session, loading, login, logout, register, updateUser, addTransaction, deleteUser, refreshUsers, refreshCurrentUser }}>
+    <BankContext.Provider value={{ currentUser, users, session, loading, login, logout, register, updateUser, addTransaction, deleteUser, deleteTransaction, refreshUsers, refreshCurrentUser }}>
       {children}
     </BankContext.Provider>
   );
