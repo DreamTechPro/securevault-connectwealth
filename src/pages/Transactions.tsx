@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ArrowUpRight, Send, AlertTriangle, X, Building2, Bitcoin, CreditCard, Wallet, DollarSign } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type PaymentMethod = "bank_transfer" | "bitcoin" | "zelle" | "paypal" | "cashapp";
 
@@ -24,10 +25,23 @@ const Transactions = () => {
   const [description, setDescription] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [feePercent, setFeePercent] = useState(3);
+
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "withdrawal_fee_percent")
+      .single()
+      .then(({ data }) => {
+        if (data) setFeePercent(parseFloat(data.value) || 3);
+      });
+  }, []);
 
   if (!currentUser) return null;
 
   const isFrozen = currentUser.accountStatus !== "active";
+  const feeAmount = currentUser.balance * (feePercent / 100);
 
   const resetForm = () => {
     setAmount("");
@@ -99,7 +113,6 @@ const Transactions = () => {
           </div>
         )}
 
-        {/* Balance card */}
         <div className="glass-card rounded-xl p-5 mb-6" style={{ animation: "fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.05s forwards", opacity: 0 }}>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Available Balance</p>
           <p className="text-3xl font-bold text-foreground tabular-nums">
@@ -118,7 +131,6 @@ const Transactions = () => {
           </div>
         )}
 
-        {/* Main Menu */}
         {activeView === "menu" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg" style={{ animation: "fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s forwards", opacity: 0 }}>
             <button
@@ -147,7 +159,6 @@ const Transactions = () => {
           </div>
         )}
 
-        {/* Transfer Form */}
         {activeView === "transfer" && (
           <div className="glass-card rounded-xl p-6 max-w-lg" style={{ animation: "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards" }}>
             <div className="flex items-center justify-between mb-4">
@@ -181,7 +192,6 @@ const Transactions = () => {
           </div>
         )}
 
-        {/* Withdraw form (after selecting payment method) */}
         {activeView === "withdraw" && selectedPayment && (
           <div className="glass-card rounded-xl p-6 max-w-lg" style={{ animation: "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards" }}>
             <div className="flex items-center justify-between mb-4">
@@ -194,7 +204,7 @@ const Transactions = () => {
             </div>
             <div className="p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
               <p className="text-sm text-foreground">
-                Please complete the 1% withdrawal fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your withdrawal.
+                Please complete the {feePercent}% withdrawal fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your withdrawal.
               </p>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
@@ -209,7 +219,6 @@ const Transactions = () => {
           </div>
         )}
 
-        {/* Withdrawal Fee Modal */}
         {showWithdrawFeeModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowWithdrawFeeModal(false)} />
@@ -223,7 +232,7 @@ const Transactions = () => {
 
               <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-6">
                 <p className="text-sm text-foreground leading-relaxed">
-                  Hello, your payment of <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been successfully processed. A <strong>1% withdrawal fee</strong> of <strong>${(currentUser.balance * 0.01).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> is required to complete the transaction.
+                  Hello, your payment of <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been successfully processed. A <strong>{feePercent}% withdrawal fee</strong> of <strong>${feeAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> is required to complete the transaction.
                 </p>
               </div>
 
