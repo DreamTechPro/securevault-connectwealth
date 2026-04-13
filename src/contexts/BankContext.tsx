@@ -226,7 +226,7 @@ export function BankProvider({ children }: { children: ReactNode }) {
     if (updates.transactionPin !== undefined) dbUpdates.transaction_pin = updates.transactionPin;
 
     if (Object.keys(dbUpdates).length > 0) {
-      await supabase.from("profiles").update(dbUpdates).eq("id", profileId);
+      await supabase.from("profiles").update(dbUpdates as any).eq("id", profileId);
     }
 
     await refreshCurrentUser();
