@@ -215,7 +215,7 @@ export function BankProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUser = async (profileId: string, updates: Partial<BankUser>) => {
-    const dbUpdates: Record<string, unknown> = {};
+    const dbUpdates: Record<string, any> = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.email !== undefined) dbUpdates.email = updates.email;
     if (updates.balance !== undefined) dbUpdates.balance = updates.balance;
@@ -226,7 +226,7 @@ export function BankProvider({ children }: { children: ReactNode }) {
     if (updates.transactionPin !== undefined) dbUpdates.transaction_pin = updates.transactionPin;
 
     if (Object.keys(dbUpdates).length > 0) {
-      await supabase.from("profiles").update(dbUpdates).eq("id", profileId);
+      await supabase.from("profiles").update(dbUpdates as any).eq("id", profileId);
     }
 
     await refreshCurrentUser();
