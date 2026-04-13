@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Pencil, Trash2, X, History, DollarSign, RefreshCw } from "lucide-react";
 
 const AdminDashboard = () => {
-  const { users, updateUser, addTransaction, deleteUser, refreshUsers } = useBank();
+  const { users, updateUser, addTransaction, deleteUser, deleteTransaction, refreshUsers } = useBank();
   const [editingUser, setEditingUser] = useState<BankUser | null>(null);
   const [showAddTx, setShowAddTx] = useState<string | null>(null);
 
@@ -79,9 +79,18 @@ const AdminDashboard = () => {
                           <span className="text-foreground font-medium">{tx.description}</span>
                           <span className="text-muted-foreground ml-2">{tx.date}</span>
                         </div>
-                        <span className={`font-semibold tabular-nums ${tx.type === "credit" ? "text-success" : "text-destructive"}`}>
-                          {tx.type === "credit" ? "+" : "-"}${tx.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-semibold tabular-nums ${tx.type === "credit" ? "text-success" : "text-destructive"}`}>
+                            {tx.type === "credit" ? "+" : "-"}${tx.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                          </span>
+                          <button
+                            onClick={() => { if (confirm("Delete this transaction? The balance will be reversed and the user won't see any record of it.")) deleteTransaction(tx.id, user.id); }}
+                            className="w-5 h-5 rounded flex items-center justify-center hover:bg-destructive/10 transition-colors"
+                            title="Delete transaction silently"
+                          >
+                            <Trash2 className="w-3 h-3 text-destructive" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
