@@ -1,11 +1,31 @@
+import { useEffect } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ArrowUpRight, ArrowDownLeft, Clock, Wallet, AlertTriangle } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  const { currentUser } = useBank();
+  const { currentUser, refreshCurrentUser } = useBank();
+
+  // Realtime: auto-refresh when admin changes balance or adds transactions
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const channel = supabase
+      .channel('dashboard-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${currentUser.id}` }, () => {
+        refreshCurrentUser();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `profile_id=eq.${currentUser.id}` }, () => {
+        refreshCurrentUser();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser?.id, refreshCurrentUser]);
+
   if (!currentUser) return null;
 
   const daysLeft = differenceInDays(new Date(currentUser.expiresAt), new Date());
