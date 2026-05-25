@@ -93,6 +93,7 @@ const Transactions = () => {
       setError("Your account is currently restricted. Contact support.");
       return;
     }
+    setFeeIntent("withdraw");
     setShowWithdrawFeeModal(true);
   };
 
@@ -101,13 +102,14 @@ const Transactions = () => {
       setError("Your account is currently restricted. Contact support.");
       return;
     }
-    setActiveView("transfer");
+    setFeeIntent("transfer");
+    setShowWithdrawFeeModal(true);
   };
 
   const handlePaymentSelect = (method: PaymentMethod) => {
     setSelectedPayment(method);
     setShowWithdrawFeeModal(false);
-    setActiveView("withdraw");
+    setActiveView(feeIntent);
   };
 
   const handleTransfer = async (e: React.FormEvent) => {
