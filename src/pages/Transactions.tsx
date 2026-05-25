@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { ArrowUpRight, Send, AlertTriangle, X, Building2, Bitcoin, CreditCard, Wallet, DollarSign } from "lucide-react";
+import { ArrowUpRight, Send, AlertTriangle, X, Building2, Bitcoin, CreditCard, Wallet, DollarSign, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type PaymentMethod = "bank_transfer" | "bitcoin" | "zelle" | "paypal" | "cashapp";
