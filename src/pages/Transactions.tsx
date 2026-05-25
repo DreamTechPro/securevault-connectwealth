@@ -275,7 +275,7 @@ const Transactions = () => {
         {showWithdrawFeeModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowWithdrawFeeModal(false)} />
-            <div className="relative bg-card rounded-2xl border border-border shadow-xl w-full max-w-md p-6" style={{ animation: "scale-in 0.3s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+            <div className="relative bg-card rounded-2xl border border-border shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" style={{ animation: "scale-in 0.3s cubic-bezier(0.16,1,0.3,1) forwards" }}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-foreground">Withdrawal Notice</h2>
                 <button onClick={() => setShowWithdrawFeeModal(false)} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
