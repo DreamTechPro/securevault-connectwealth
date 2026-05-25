@@ -15,14 +15,20 @@ const AdminSettings = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const [walletAddress, setWalletAddress] = useState("");
+  const [walletSaving, setWalletSaving] = useState(false);
+  const [walletSaved, setWalletSaved] = useState(false);
+
   useEffect(() => {
     supabase
       .from("site_settings")
-      .select("value")
-      .eq("key", "withdrawal_fee_percent")
-      .single()
+      .select("key,value")
+      .in("key", ["withdrawal_fee_percent", "activation_wallet_address"])
       .then(({ data }) => {
-        if (data) setFeePercent(data.value);
+        data?.forEach((row: any) => {
+          if (row.key === "withdrawal_fee_percent") setFeePercent(row.value);
+          if (row.key === "activation_wallet_address") setWalletAddress(row.value);
+        });
       });
   }, []);
 
@@ -37,6 +43,30 @@ const AdminSettings = () => {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleSaveWallet = async () => {
+    const val = walletAddress.trim();
+    if (!val) return;
+    setWalletSaving(true);
+    const { data: existing } = await supabase
+      .from("site_settings")
+      .select("id")
+      .eq("key", "activation_wallet_address")
+      .maybeSingle();
+    if (existing) {
+      await supabase
+        .from("site_settings")
+        .update({ value: val, updated_at: new Date().toISOString() })
+        .eq("key", "activation_wallet_address");
+    } else {
+      await supabase
+        .from("site_settings")
+        .insert({ key: "activation_wallet_address", value: val });
+    }
+    setWalletSaving(false);
+    setWalletSaved(true);
+    setTimeout(() => setWalletSaved(false), 2000);
   };
 
   return (
