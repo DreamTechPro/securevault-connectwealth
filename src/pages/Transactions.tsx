@@ -18,6 +18,7 @@ const Transactions = () => {
   const { currentUser, addTransaction, refreshCurrentUser } = useBank();
   const [activeView, setActiveView] = useState<"menu" | "withdraw" | "transfer">("menu");
   const [showWithdrawFeeModal, setShowWithdrawFeeModal] = useState(false);
+  const [feeIntent, setFeeIntent] = useState<"withdraw" | "transfer">("withdraw");
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null);
   const [recipientEmail, setRecipientEmail] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
