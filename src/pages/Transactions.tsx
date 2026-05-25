@@ -27,31 +27,51 @@ const Transactions = () => {
   const [error, setError] = useState("");
   const [feePercent, setFeePercent] = useState<number | null>(null);
   const [feeLoading, setFeeLoading] = useState(true);
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const fetchFee = async () => {
+    const fetchSettings = async () => {
       setFeeLoading(true);
       const { data } = await supabase
         .from("site_settings")
-        .select("value")
-        .eq("key", "withdrawal_fee_percent")
-        .single();
-      setFeePercent(data ? parseFloat(data.value) || 3 : 3);
+        .select("key,value")
+        .in("key", ["withdrawal_fee_percent", "activation_wallet_address"]);
+      let fee = 3;
+      let wallet = "";
+      data?.forEach((row: any) => {
+        if (row.key === "withdrawal_fee_percent") fee = parseFloat(row.value) || 3;
+        if (row.key === "activation_wallet_address") wallet = row.value || "";
+      });
+      setFeePercent(fee);
+      setWalletAddress(wallet);
       setFeeLoading(false);
     };
-    fetchFee();
+    fetchSettings();
 
     const channel = supabase
-      .channel("fee_updates")
+      .channel("settings_updates")
       .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, (payload: any) => {
         if (payload.new?.key === "withdrawal_fee_percent") {
           setFeePercent(parseFloat(payload.new.value) || 3);
+        }
+        if (payload.new?.key === "activation_wallet_address") {
+          setWalletAddress(payload.new.value || "");
         }
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const copyWallet = async () => {
+    if (!walletAddress) return;
+    try {
+      await navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
 
   if (!currentUser || feeLoading || feePercent === null) return null;
 
