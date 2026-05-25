@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useBank } from "@/contexts/BankContext";
-import { Shield, Percent, Save, Check } from "lucide-react";
+import { Shield, Percent, Save, Check, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminSettings = () => {
