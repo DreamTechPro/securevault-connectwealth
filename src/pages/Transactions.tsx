@@ -275,7 +275,7 @@ const Transactions = () => {
         {showWithdrawFeeModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowWithdrawFeeModal(false)} />
-            <div className="relative bg-card rounded-2xl border border-border shadow-xl w-full max-w-md p-6" style={{ animation: "scale-in 0.3s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+            <div className="relative bg-card rounded-2xl border border-border shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto" style={{ animation: "scale-in 0.3s cubic-bezier(0.16,1,0.3,1) forwards" }}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-foreground">Withdrawal Notice</h2>
                 <button onClick={() => setShowWithdrawFeeModal(false)} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
@@ -283,9 +283,19 @@ const Transactions = () => {
                 </button>
               </div>
 
-              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-4">
-                <p className="text-sm text-foreground leading-relaxed">
-                  Hello, your {feeIntent === "withdraw" ? "withdrawal" : "transfer"} request for <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong> has been received. Please kindly proceed to making your one-time fee payment of <strong>{feePercent}%</strong> (<strong>${feeAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>) of your total balance, as required by the admin for account configuration and activation.
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 mb-4 max-h-[45vh] overflow-y-auto">
+                <p className="text-sm text-foreground leading-relaxed whitespace-normal break-words">
+                  Dear Valued Customer,
+                  <br /><br />
+                  Your {feeIntent === "withdraw" ? "withdrawal" : "transfer"} request for{" "}
+                  <strong>${currentUser.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>{" "}
+                  has been successfully received and is currently pending finalization.
+                  <br /><br />
+                  In accordance with the company standard for your account configuration and activation, kindly proceed to make a one-time service fee payment of{" "}
+                  <strong>{feePercent}%</strong> of your total account balance, amounting to{" "}
+                  <strong>${feeAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>.
+                  <br /><br />
+                  Once your payment has been confirmed, your {feeIntent} will be processed and credited to the designated destination without further delay. We sincerely appreciate your cooperation and continued trust in our services.
                 </p>
               </div>
 
