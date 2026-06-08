@@ -1,30 +1,51 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ArrowUpRight, ArrowDownLeft, Clock, Wallet, AlertTriangle } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+const SEEN_KEY = "svb_seen_tx_ids";
 
 const Dashboard = () => {
   const { currentUser, refreshCurrentUser } = useBank();
+  const seenRef = useRef<Set<string> | null>(null);
 
-  // Realtime: auto-refresh when admin changes balance or adds transactions
+  // Poll every 8s for balance / transaction changes; toast new credits & debits
   useEffect(() => {
     if (!currentUser) return;
-
-    const channel = supabase
-      .channel('dashboard-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${currentUser.id}` }, () => {
-        refreshCurrentUser();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `profile_id=eq.${currentUser.id}` }, () => {
-        refreshCurrentUser();
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    const id = setInterval(() => { refreshCurrentUser(); }, 8000);
+    return () => clearInterval(id);
   }, [currentUser?.id, refreshCurrentUser]);
+
+  // Detect new transactions and notify
+  useEffect(() => {
+    if (!currentUser) return;
+    if (seenRef.current === null) {
+      // First load: prime with localStorage so old txs don't re-notify
+      try {
+        const raw = localStorage.getItem(`${SEEN_KEY}_${currentUser.id}`);
+        seenRef.current = new Set(raw ? JSON.parse(raw) : currentUser.transactions.map((t) => t.id));
+      } catch {
+        seenRef.current = new Set(currentUser.transactions.map((t) => t.id));
+      }
+      return;
+    }
+    const seen = seenRef.current;
+    const fresh = currentUser.transactions.filter((t) => !seen.has(t.id));
+    fresh.forEach((t) => {
+      if (t.type === "credit") {
+        toast.success(`Account credited +$${t.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, { description: t.description });
+      } else {
+        toast(`Debit -$${t.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, { description: t.description });
+      }
+      seen.add(t.id);
+    });
+    if (fresh.length > 0) {
+      try { localStorage.setItem(`${SEEN_KEY}_${currentUser.id}`, JSON.stringify([...seen])); } catch {}
+    }
+  }, [currentUser?.transactions]);
 
   if (!currentUser) return null;
 
