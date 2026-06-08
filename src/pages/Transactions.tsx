@@ -122,13 +122,23 @@ const Transactions = () => {
     if (num > currentUser.balance) { setError("Insufficient balance"); return; }
     if (!recipientEmail.trim() && !accountNumber.trim()) { setError("Please enter the recipient's email or account number"); return; }
 
-    await addTransaction(currentUser.id, {
-      type: "debit",
-      amount: num,
-      description: description || `Transfer`,
-      date: new Date().toISOString().split("T")[0],
-      balanceAfter: currentUser.balance - num,
+    // Look up recipient profile by email or account number
+    let query = supabase.from("profiles").select("id,user_id").limit(1);
+    if (recipientEmail.trim()) {
+      query = query.eq("email", recipientEmail.trim().toLowerCase());
+    } else {
+      query = query.eq("account_number", accountNumber.trim());
+    }
+    const { data: recipient, error: lookupErr } = await query.maybeSingle();
+    if (lookupErr || !recipient) { setError("Recipient not found"); return; }
+    if (recipient.user_id === currentUser.id) { setError("You cannot transfer to yourself"); return; }
+
+    const { error: rpcErr } = await supabase.rpc("transfer_funds", {
+      _recipient_profile_id: recipient.id,
+      _amount: num,
+      _description: description || "Transfer",
     });
+    if (rpcErr) { setError(rpcErr.message || "Transfer failed"); return; }
 
     await refreshCurrentUser();
 
