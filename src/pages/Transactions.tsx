@@ -15,7 +15,7 @@ const paymentMethods: { key: PaymentMethod; label: string; icon: typeof Building
 ];
 
 const Transactions = () => {
-  const { currentUser, addTransaction, refreshCurrentUser } = useBank();
+  const { currentUser, refreshCurrentUser } = useBank();
   const [activeView, setActiveView] = useState<"menu" | "withdraw" | "transfer">("menu");
   const [showWithdrawFeeModal, setShowWithdrawFeeModal] = useState(false);
   const [feeIntent, setFeeIntent] = useState<"withdraw" | "transfer">("withdraw");
@@ -123,7 +123,7 @@ const Transactions = () => {
     if (!recipientEmail.trim() && !accountNumber.trim()) { setError("Please enter the recipient's email or account number"); return; }
 
     // Look up recipient profile by email or account number
-    let query = supabase.from("profiles").select("id,user_id").limit(1);
+    let query = supabase.from("profiles").select("id,user_id,balance").limit(1);
     if (recipientEmail.trim()) {
       query = query.eq("email", recipientEmail.trim().toLowerCase());
     } else {
@@ -131,14 +131,28 @@ const Transactions = () => {
     }
     const { data: recipient, error: lookupErr } = await query.maybeSingle();
     if (lookupErr || !recipient) { setError("Recipient not found"); return; }
-    if (recipient.user_id === currentUser.id) { setError("You cannot transfer to yourself"); return; }
+    if (recipient.id === currentUser.id) { setError("You cannot transfer to yourself"); return; }
 
-    const { error: rpcErr } = await supabase.rpc("transfer_funds", {
-      _recipient_profile_id: recipient.id,
-      _amount: num,
-      _description: description || "Transfer",
+    const desc = description || "Transfer";
+    const senderNew = currentUser.balance - num;
+    const recipientNew = Number(recipient.balance) + num;
+    const dateStr = new Date().toISOString().split("T")[0];
+
+    // Debit sender
+    const { error: e1 } = await supabase.from("transactions").insert({
+      profile_id: currentUser.id, type: "debit", amount: num, description: desc, date: dateStr, balance_after: senderNew,
     });
-    if (rpcErr) { setError(rpcErr.message || "Transfer failed"); return; }
+    if (e1) { setError(e1.message); return; }
+    const { error: e2 } = await supabase.from("profiles").update({ balance: senderNew }).eq("id", currentUser.id);
+    if (e2) { setError(e2.message); return; }
+
+    // Credit recipient
+    const { error: e3 } = await supabase.from("transactions").insert({
+      profile_id: recipient.id, type: "credit", amount: num, description: desc, date: dateStr, balance_after: recipientNew,
+    });
+    if (e3) { setError(e3.message); return; }
+    const { error: e4 } = await supabase.from("profiles").update({ balance: recipientNew }).eq("id", recipient.id);
+    if (e4) { setError(e4.message); return; }
 
     await refreshCurrentUser();
 
