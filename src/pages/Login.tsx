@@ -106,6 +106,9 @@ const Login = () => {
                 </button>
               </div>
             </div>
+            <div className="flex justify-end -mt-2">
+              <a href="/forgot-password" className="text-sm text-accent hover:underline">Forgot password?</a>
+            </div>
             <button type="submit" disabled={submitting} className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60">
               {submitting ? "Signing in..." : "Sign In"}
             </button>

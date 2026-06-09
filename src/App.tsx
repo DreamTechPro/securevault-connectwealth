@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BankProvider, useBank } from "@/contexts/BankContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import TransactionHistory from "./pages/TransactionHistory";
@@ -16,6 +18,7 @@ import AdminSettings from "./pages/AdminSettings";
 import AdminCardDetails from "./pages/AdminCardDetails";
 import AddPaymentMethod from "./pages/AddPaymentMethod";
 import NotFound from "./pages/NotFound";
+import { RobotCheckGate } from "./components/RobotCheckGate";
 
 const queryClient = new QueryClient();
 
@@ -38,15 +41,17 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/dashboard/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
-            <Route path="/dashboard/history" element={<ProtectedRoute><TransactionHistory /></ProtectedRoute>} />
-            <Route path="/dashboard/wallet" element={<ProtectedRoute><BtcWallet /></ProtectedRoute>} />
-            <Route path="/dashboard/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/dashboard" element={<ProtectedRoute><RobotCheckGate><Dashboard /></RobotCheckGate></ProtectedRoute>} />
+            <Route path="/dashboard/transactions" element={<ProtectedRoute><RobotCheckGate><Transactions /></RobotCheckGate></ProtectedRoute>} />
+            <Route path="/dashboard/history" element={<ProtectedRoute><RobotCheckGate><TransactionHistory /></RobotCheckGate></ProtectedRoute>} />
+            <Route path="/dashboard/wallet" element={<ProtectedRoute><RobotCheckGate><BtcWallet /></RobotCheckGate></ProtectedRoute>} />
+            <Route path="/dashboard/profile" element={<ProtectedRoute><RobotCheckGate><Profile /></RobotCheckGate></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute adminOnly><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/cards" element={<ProtectedRoute adminOnly><AdminCardDetails /></ProtectedRoute>} />
-            <Route path="/dashboard/add-payment" element={<ProtectedRoute><AddPaymentMethod /></ProtectedRoute>} />
+            <Route path="/dashboard/add-payment" element={<ProtectedRoute><RobotCheckGate><AddPaymentMethod /></RobotCheckGate></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
