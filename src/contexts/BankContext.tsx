@@ -29,6 +29,7 @@ export interface BankUser {
   createdAt: string;
   expiresAt: string;
   transactionPin: string;
+  showFeeNotice: boolean;
 }
 
 interface BankContextType {
