@@ -30,6 +30,11 @@ const Transactions = () => {
   const [feeLoading, setFeeLoading] = useState(true);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [showCardConfirm, setShowCardConfirm] = useState(false);
+  const [cardLastSix, setCardLastSix] = useState("");
+  const [confirmError, setConfirmError] = useState("");
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [pendingWithdrawAmount, setPendingWithdrawAmount] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
