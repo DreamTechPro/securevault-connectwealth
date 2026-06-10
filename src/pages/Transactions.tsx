@@ -336,6 +336,30 @@ const Transactions = () => {
           </div>
         )}
 
+        {activeView === "withdraw" && !selectedPayment && (
+          <div className="glass-card rounded-xl p-6 max-w-lg" style={{ animation: "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Withdraw Funds</h2>
+              <button onClick={() => { setActiveView("menu"); resetForm(); }} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+            <form onSubmit={handleWithdrawSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Amount (USD)</label>
+                <input type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-shadow" placeholder="0.00" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Description (optional)</label>
+                <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-shadow" placeholder="What's this for?" />
+              </div>
+              <button type="submit" className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+                Send
+              </button>
+            </form>
+          </div>
+        )}
+
         {activeView === "withdraw" && selectedPayment && (
           <div className="glass-card rounded-xl p-6 max-w-lg" style={{ animation: "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards" }}>
             <div className="flex items-center justify-between mb-4">
@@ -375,6 +399,46 @@ const Transactions = () => {
             >
               Done
             </button>
+          </div>
+        )}
+
+        {showCardConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { if (!confirmLoading) { setShowCardConfirm(false); setCardLastSix(""); setConfirmError(""); } }} />
+            <div className="relative bg-card rounded-2xl border border-border shadow-xl w-full max-w-md p-6" style={{ animation: "scale-in 0.3s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-foreground">Confirm Transaction</h2>
+                <button onClick={() => { if (!confirmLoading) { setShowCardConfirm(false); setCardLastSix(""); setConfirmError(""); } }} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Please enter the <strong className="text-foreground">last 6 digits of your card</strong> to authorize this {feeIntent}.
+              </p>
+              <form onSubmit={handleCardConfirm} className="space-y-4">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  value={cardLastSix}
+                  onChange={(e) => setCardLastSix(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="••••••"
+                  autoFocus
+                  className="w-full h-12 px-4 rounded-lg border border-border bg-card text-foreground text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-shadow"
+                />
+                {confirmError && (
+                  <p className="text-destructive text-sm">{confirmError}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={confirmLoading || cardLastSix.length !== 6}
+                  className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {confirmLoading ? "Verifying..." : "Confirm Transaction"}
+                </button>
+              </form>
+            </div>
           </div>
         )}
 
