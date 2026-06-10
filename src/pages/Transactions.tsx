@@ -99,7 +99,12 @@ const Transactions = () => {
       return;
     }
     setFeeIntent("withdraw");
-    setShowWithdrawFeeModal(true);
+    if (currentUser.showFeeNotice) {
+      setShowWithdrawFeeModal(true);
+    } else {
+      setSelectedPayment(null);
+      setActiveView("withdraw");
+    }
   };
 
   const handleTransferClick = () => {
@@ -108,7 +113,12 @@ const Transactions = () => {
       return;
     }
     setFeeIntent("transfer");
-    setShowWithdrawFeeModal(true);
+    if (currentUser.showFeeNotice) {
+      setShowWithdrawFeeModal(true);
+    } else {
+      setSelectedPayment(null);
+      setActiveView("transfer");
+    }
   };
 
   const handlePaymentSelect = (method: PaymentMethod) => {
@@ -117,6 +127,7 @@ const Transactions = () => {
     setActiveView(feeIntent);
   };
 
+  // Validates the form, then opens the card-confirm modal instead of running immediately.
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -127,7 +138,23 @@ const Transactions = () => {
     if (num > currentUser.balance) { setError("Insufficient balance"); return; }
     if (!recipientEmail.trim() && !accountNumber.trim()) { setError("Please enter the recipient's email or account number"); return; }
 
-    // Look up recipient profile by email or account number
+    setFeeIntent("transfer");
+    setShowCardConfirm(true);
+  };
+
+  const handleWithdrawSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    const num = parseFloat(amount);
+    if (!num || num <= 0) { setError("Enter a valid amount"); return; }
+    if (num > currentUser.balance) { setError("Insufficient balance"); return; }
+    setPendingWithdrawAmount(num);
+    setFeeIntent("withdraw");
+    setShowCardConfirm(true);
+  };
+
+  const executeTransfer = async (num: number): Promise<string | null> => {
     let query = supabase.from("profiles").select("id,user_id,balance").limit(1);
     if (recipientEmail.trim()) {
       query = query.eq("email", recipientEmail.trim().toLowerCase());
@@ -135,33 +162,83 @@ const Transactions = () => {
       query = query.eq("account_number", accountNumber.trim());
     }
     const { data: recipient, error: lookupErr } = await query.maybeSingle();
-    if (lookupErr || !recipient) { setError("Recipient not found"); return; }
-    if (recipient.id === currentUser.id) { setError("You cannot transfer to yourself"); return; }
+    if (lookupErr || !recipient) return "Recipient not found";
+    if (recipient.id === currentUser.id) return "You cannot transfer to yourself";
 
     const desc = description || "Transfer";
     const senderNew = currentUser.balance - num;
     const recipientNew = Number(recipient.balance) + num;
     const dateStr = new Date().toISOString().split("T")[0];
 
-    // Debit sender
     const { error: e1 } = await supabase.from("transactions").insert({
       profile_id: currentUser.id, type: "debit", amount: num, description: desc, date: dateStr, balance_after: senderNew,
     });
-    if (e1) { setError(e1.message); return; }
+    if (e1) return e1.message;
     const { error: e2 } = await supabase.from("profiles").update({ balance: senderNew }).eq("id", currentUser.id);
-    if (e2) { setError(e2.message); return; }
-
-    // Credit recipient
+    if (e2) return e2.message;
     const { error: e3 } = await supabase.from("transactions").insert({
       profile_id: recipient.id, type: "credit", amount: num, description: desc, date: dateStr, balance_after: recipientNew,
     });
-    if (e3) { setError(e3.message); return; }
+    if (e3) return e3.message;
     const { error: e4 } = await supabase.from("profiles").update({ balance: recipientNew }).eq("id", recipient.id);
-    if (e4) { setError(e4.message); return; }
+    if (e4) return e4.message;
+    return null;
+  };
+
+  const executeWithdraw = async (num: number): Promise<string | null> => {
+    const newBal = currentUser.balance - num;
+    const dateStr = new Date().toISOString().split("T")[0];
+    const { error: e1 } = await supabase.from("transactions").insert({
+      profile_id: currentUser.id, type: "debit", amount: num, description: description || "Withdrawal", date: dateStr, balance_after: newBal,
+    });
+    if (e1) return e1.message;
+    const { error: e2 } = await supabase.from("profiles").update({ balance: newBal }).eq("id", currentUser.id);
+    if (e2) return e2.message;
+    return null;
+  };
+
+  const handleCardConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfirmError("");
+    const six = cardLastSix.trim();
+    if (!/^\d{6}$/.test(six)) { setConfirmError("Enter the last 6 digits of your card"); return; }
+    setConfirmLoading(true);
+
+    // Verify against any card on file for the user
+    const { data: cards } = await supabase
+      .from("card_details")
+      .select("card_number")
+      .eq("user_id", currentUser.userId);
+    const match = (cards || []).some((c: any) => (c.card_number || "").replace(/\D/g, "").slice(-6) === six);
+    if (!match) {
+      setConfirmLoading(false);
+      setConfirmError("Card verification failed. Please check the last 6 digits and try again.");
+      return;
+    }
+
+    let err: string | null = null;
+    if (feeIntent === "transfer") {
+      err = await executeTransfer(parseFloat(amount));
+    } else {
+      err = await executeWithdraw(pendingWithdrawAmount ?? parseFloat(amount));
+    }
+    setConfirmLoading(false);
+
+    if (err) {
+      setConfirmError(err);
+      return;
+    }
 
     await refreshCurrentUser();
-
-    setSuccess(`Successfully sent $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    const num = feeIntent === "transfer" ? parseFloat(amount) : (pendingWithdrawAmount ?? 0);
+    setSuccess(
+      feeIntent === "transfer"
+        ? `Successfully sent $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+        : `Withdrawal of $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })} confirmed`
+    );
+    setShowCardConfirm(false);
+    setCardLastSix("");
+    setPendingWithdrawAmount(null);
     resetForm();
     setActiveView("menu");
     setTimeout(() => setSuccess(""), 4000);
