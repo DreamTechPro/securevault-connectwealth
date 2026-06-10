@@ -158,6 +158,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
       </main>
+
+      {currentUser?.role !== "admin" && <SupportChatbot />}
     </div>
   );
 }
