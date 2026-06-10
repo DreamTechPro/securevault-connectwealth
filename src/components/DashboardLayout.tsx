@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, History, Wallet, UserCircle, Settings, LogOut, Shield, Menu, X, Users, ArrowUpRight, CreditCard,
 } from "lucide-react";
+import { SupportChatbot } from "./SupportChatbot";
 
 const userLinks = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -157,6 +158,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
       </main>
+
+      {currentUser?.role !== "admin" && <SupportChatbot />}
     </div>
   );
 }

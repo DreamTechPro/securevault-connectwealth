@@ -29,6 +29,7 @@ export interface BankUser {
   createdAt: string;
   expiresAt: string;
   transactionPin: string;
+  showFeeNotice: boolean;
 }
 
 interface BankContextType {
@@ -74,6 +75,7 @@ function mapProfile(profile: any, role: string, transactions: Transaction[]): Ba
     btcWallet: profile.btc_wallet,
     profileImage: profile.profile_image,
     transactionPin: profile.transaction_pin,
+    showFeeNotice: profile.show_fee_notice ?? true,
     transactions,
     createdAt: profile.created_at,
     expiresAt: profile.expires_at,
@@ -225,6 +227,7 @@ export function BankProvider({ children }: { children: ReactNode }) {
     if (updates.btcWallet !== undefined) dbUpdates.btc_wallet = updates.btcWallet;
     if (updates.profileImage !== undefined) dbUpdates.profile_image = updates.profileImage;
     if (updates.transactionPin !== undefined) dbUpdates.transaction_pin = updates.transactionPin;
+    if (updates.showFeeNotice !== undefined) dbUpdates.show_fee_notice = updates.showFeeNotice;
 
     if (Object.keys(dbUpdates).length > 0) {
       await supabase.from("profiles").update(dbUpdates as any).eq("id", profileId);

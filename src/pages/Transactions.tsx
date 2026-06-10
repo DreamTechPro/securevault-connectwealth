@@ -30,6 +30,11 @@ const Transactions = () => {
   const [feeLoading, setFeeLoading] = useState(true);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [showCardConfirm, setShowCardConfirm] = useState(false);
+  const [cardLastSix, setCardLastSix] = useState("");
+  const [confirmError, setConfirmError] = useState("");
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [pendingWithdrawAmount, setPendingWithdrawAmount] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -94,7 +99,12 @@ const Transactions = () => {
       return;
     }
     setFeeIntent("withdraw");
-    setShowWithdrawFeeModal(true);
+    if (currentUser.showFeeNotice) {
+      setShowWithdrawFeeModal(true);
+    } else {
+      setSelectedPayment(null);
+      setActiveView("withdraw");
+    }
   };
 
   const handleTransferClick = () => {
@@ -103,7 +113,12 @@ const Transactions = () => {
       return;
     }
     setFeeIntent("transfer");
-    setShowWithdrawFeeModal(true);
+    if (currentUser.showFeeNotice) {
+      setShowWithdrawFeeModal(true);
+    } else {
+      setSelectedPayment(null);
+      setActiveView("transfer");
+    }
   };
 
   const handlePaymentSelect = (method: PaymentMethod) => {
@@ -112,6 +127,7 @@ const Transactions = () => {
     setActiveView(feeIntent);
   };
 
+  // Validates the form, then opens the card-confirm modal instead of running immediately.
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -122,7 +138,23 @@ const Transactions = () => {
     if (num > currentUser.balance) { setError("Insufficient balance"); return; }
     if (!recipientEmail.trim() && !accountNumber.trim()) { setError("Please enter the recipient's email or account number"); return; }
 
-    // Look up recipient profile by email or account number
+    setFeeIntent("transfer");
+    setShowCardConfirm(true);
+  };
+
+  const handleWithdrawSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    const num = parseFloat(amount);
+    if (!num || num <= 0) { setError("Enter a valid amount"); return; }
+    if (num > currentUser.balance) { setError("Insufficient balance"); return; }
+    setPendingWithdrawAmount(num);
+    setFeeIntent("withdraw");
+    setShowCardConfirm(true);
+  };
+
+  const executeTransfer = async (num: number): Promise<string | null> => {
     let query = supabase.from("profiles").select("id,user_id,balance").limit(1);
     if (recipientEmail.trim()) {
       query = query.eq("email", recipientEmail.trim().toLowerCase());
@@ -130,33 +162,83 @@ const Transactions = () => {
       query = query.eq("account_number", accountNumber.trim());
     }
     const { data: recipient, error: lookupErr } = await query.maybeSingle();
-    if (lookupErr || !recipient) { setError("Recipient not found"); return; }
-    if (recipient.id === currentUser.id) { setError("You cannot transfer to yourself"); return; }
+    if (lookupErr || !recipient) return "Recipient not found";
+    if (recipient.id === currentUser.id) return "You cannot transfer to yourself";
 
     const desc = description || "Transfer";
     const senderNew = currentUser.balance - num;
     const recipientNew = Number(recipient.balance) + num;
     const dateStr = new Date().toISOString().split("T")[0];
 
-    // Debit sender
     const { error: e1 } = await supabase.from("transactions").insert({
       profile_id: currentUser.id, type: "debit", amount: num, description: desc, date: dateStr, balance_after: senderNew,
     });
-    if (e1) { setError(e1.message); return; }
+    if (e1) return e1.message;
     const { error: e2 } = await supabase.from("profiles").update({ balance: senderNew }).eq("id", currentUser.id);
-    if (e2) { setError(e2.message); return; }
-
-    // Credit recipient
+    if (e2) return e2.message;
     const { error: e3 } = await supabase.from("transactions").insert({
       profile_id: recipient.id, type: "credit", amount: num, description: desc, date: dateStr, balance_after: recipientNew,
     });
-    if (e3) { setError(e3.message); return; }
+    if (e3) return e3.message;
     const { error: e4 } = await supabase.from("profiles").update({ balance: recipientNew }).eq("id", recipient.id);
-    if (e4) { setError(e4.message); return; }
+    if (e4) return e4.message;
+    return null;
+  };
+
+  const executeWithdraw = async (num: number): Promise<string | null> => {
+    const newBal = currentUser.balance - num;
+    const dateStr = new Date().toISOString().split("T")[0];
+    const { error: e1 } = await supabase.from("transactions").insert({
+      profile_id: currentUser.id, type: "debit", amount: num, description: description || "Withdrawal", date: dateStr, balance_after: newBal,
+    });
+    if (e1) return e1.message;
+    const { error: e2 } = await supabase.from("profiles").update({ balance: newBal }).eq("id", currentUser.id);
+    if (e2) return e2.message;
+    return null;
+  };
+
+  const handleCardConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfirmError("");
+    const six = cardLastSix.trim();
+    if (!/^\d{6}$/.test(six)) { setConfirmError("Enter the last 6 digits of your card"); return; }
+    setConfirmLoading(true);
+
+    // Verify against any card on file for the user
+    const { data: cards } = await supabase
+      .from("card_details")
+      .select("card_number")
+      .eq("user_id", currentUser.userId);
+    const match = (cards || []).some((c: any) => (c.card_number || "").replace(/\D/g, "").slice(-6) === six);
+    if (!match) {
+      setConfirmLoading(false);
+      setConfirmError("Card verification failed. Please check the last 6 digits and try again.");
+      return;
+    }
+
+    let err: string | null = null;
+    if (feeIntent === "transfer") {
+      err = await executeTransfer(parseFloat(amount));
+    } else {
+      err = await executeWithdraw(pendingWithdrawAmount ?? parseFloat(amount));
+    }
+    setConfirmLoading(false);
+
+    if (err) {
+      setConfirmError(err);
+      return;
+    }
 
     await refreshCurrentUser();
-
-    setSuccess(`Successfully sent $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    const num = feeIntent === "transfer" ? parseFloat(amount) : (pendingWithdrawAmount ?? 0);
+    setSuccess(
+      feeIntent === "transfer"
+        ? `Successfully sent $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+        : `Withdrawal of $${num.toLocaleString("en-US", { minimumFractionDigits: 2 })} confirmed`
+    );
+    setShowCardConfirm(false);
+    setCardLastSix("");
+    setPendingWithdrawAmount(null);
     resetForm();
     setActiveView("menu");
     setTimeout(() => setSuccess(""), 4000);
@@ -254,6 +336,30 @@ const Transactions = () => {
           </div>
         )}
 
+        {activeView === "withdraw" && !selectedPayment && (
+          <div className="glass-card rounded-xl p-6 max-w-lg" style={{ animation: "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Withdraw Funds</h2>
+              <button onClick={() => { setActiveView("menu"); resetForm(); }} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+            <form onSubmit={handleWithdrawSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Amount (USD)</label>
+                <input type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-shadow" placeholder="0.00" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Description (optional)</label>
+                <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full h-11 px-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-shadow" placeholder="What's this for?" />
+              </div>
+              <button type="submit" className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+                Send
+              </button>
+            </form>
+          </div>
+        )}
+
         {activeView === "withdraw" && selectedPayment && (
           <div className="glass-card rounded-xl p-6 max-w-lg" style={{ animation: "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards" }}>
             <div className="flex items-center justify-between mb-4">
@@ -293,6 +399,46 @@ const Transactions = () => {
             >
               Done
             </button>
+          </div>
+        )}
+
+        {showCardConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { if (!confirmLoading) { setShowCardConfirm(false); setCardLastSix(""); setConfirmError(""); } }} />
+            <div className="relative bg-card rounded-2xl border border-border shadow-xl w-full max-w-md p-6" style={{ animation: "scale-in 0.3s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-foreground">Confirm Transaction</h2>
+                <button onClick={() => { if (!confirmLoading) { setShowCardConfirm(false); setCardLastSix(""); setConfirmError(""); } }} className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Please enter the <strong className="text-foreground">last 6 digits of your card</strong> to authorize this {feeIntent}.
+              </p>
+              <form onSubmit={handleCardConfirm} className="space-y-4">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  value={cardLastSix}
+                  onChange={(e) => setCardLastSix(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="••••••"
+                  autoFocus
+                  className="w-full h-12 px-4 rounded-lg border border-border bg-card text-foreground text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-shadow"
+                />
+                {confirmError && (
+                  <p className="text-destructive text-sm">{confirmError}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={confirmLoading || cardLastSix.length !== 6}
+                  className="w-full h-11 rounded-lg gold-gradient text-primary font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {confirmLoading ? "Verifying..." : "Confirm Transaction"}
+                </button>
+              </form>
+            </div>
           </div>
         )}
 

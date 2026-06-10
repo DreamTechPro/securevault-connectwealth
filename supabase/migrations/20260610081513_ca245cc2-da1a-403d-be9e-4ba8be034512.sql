@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS show_fee_notice boolean NOT NULL DEFAULT true;

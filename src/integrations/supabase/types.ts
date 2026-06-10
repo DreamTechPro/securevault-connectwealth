@@ -62,6 +62,7 @@ export type Database = {
           id: string
           name: string
           profile_image: string
+          show_fee_notice: boolean
           support_message: string
           transaction_pin: string
           user_id: string
@@ -77,6 +78,7 @@ export type Database = {
           id?: string
           name: string
           profile_image?: string
+          show_fee_notice?: boolean
           support_message?: string
           transaction_pin?: string
           user_id: string
@@ -92,6 +94,7 @@ export type Database = {
           id?: string
           name?: string
           profile_image?: string
+          show_fee_notice?: boolean
           support_message?: string
           transaction_pin?: string
           user_id?: string
