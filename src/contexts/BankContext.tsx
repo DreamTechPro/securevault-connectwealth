@@ -81,10 +81,6 @@ function mapProfile(profile: any, role: string, transactions: Transaction[]): Ba
     expiresAt: profile.expires_at,
   };
 }
-    createdAt: profile.created_at,
-    expiresAt: profile.expires_at,
-  };
-}
 
 async function fetchProfileWithRole(userId: string): Promise<BankUser | null> {
   const { data: profile, error: profileError } = await supabase
