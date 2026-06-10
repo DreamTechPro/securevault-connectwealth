@@ -116,10 +116,11 @@ function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () 
   const [supportMsg, setSupportMsg] = useState(user.supportMessage);
   const [btcWallet, setBtcWallet] = useState(user.btcWallet);
   const [profileImage, setProfileImage] = useState(user.profileImage);
+  const [showFeeNotice, setShowFeeNotice] = useState(user.showFeeNotice);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave({ name, email, balance: parseFloat(balance) || 0, accountStatus: status, supportMessage: supportMsg, btcWallet, profileImage });
+    await onSave({ name, email, balance: parseFloat(balance) || 0, accountStatus: status, supportMessage: supportMsg, btcWallet, profileImage, showFeeNotice });
   };
 
   return (
