@@ -143,6 +143,18 @@ function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () 
         </div>
         <Field label="BTC Wallet Address" value={btcWallet} onChange={setBtcWallet} />
         <Field label="Profile Image URL" value={profileImage} onChange={setProfileImage} placeholder="https://..." />
+        <label className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-muted/30 cursor-pointer">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">Show fee notice on withdraw/transfer</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Off = user is asked for card last 6 digits instead.</p>
+          </div>
+          <input
+            type="checkbox"
+            checked={showFeeNotice}
+            onChange={(e) => setShowFeeNotice(e.target.checked)}
+            className="w-5 h-5 accent-accent cursor-pointer"
+          />
+        </label>
         <div className="flex gap-2 pt-2">
           <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors">Cancel</button>
           <button type="submit" className="flex-1 h-10 rounded-lg gold-gradient text-primary text-sm font-semibold hover:opacity-90 active:scale-[0.97] transition-all">Save</button>
