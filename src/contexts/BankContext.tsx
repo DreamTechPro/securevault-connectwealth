@@ -75,7 +75,12 @@ function mapProfile(profile: any, role: string, transactions: Transaction[]): Ba
     btcWallet: profile.btc_wallet,
     profileImage: profile.profile_image,
     transactionPin: profile.transaction_pin,
+    showFeeNotice: profile.show_fee_notice ?? true,
     transactions,
+    createdAt: profile.created_at,
+    expiresAt: profile.expires_at,
+  };
+}
     createdAt: profile.created_at,
     expiresAt: profile.expires_at,
   };
