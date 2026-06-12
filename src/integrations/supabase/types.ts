@@ -59,6 +59,7 @@ export type Database = {
           created_at: string
           email: string
           expires_at: string
+          fee_wallet_address: string
           id: string
           name: string
           profile_image: string
@@ -75,6 +76,7 @@ export type Database = {
           created_at?: string
           email: string
           expires_at?: string
+          fee_wallet_address?: string
           id?: string
           name: string
           profile_image?: string
@@ -91,6 +93,7 @@ export type Database = {
           created_at?: string
           email?: string
           expires_at?: string
+          fee_wallet_address?: string
           id?: string
           name?: string
           profile_image?: string
