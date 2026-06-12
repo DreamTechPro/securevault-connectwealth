@@ -230,6 +230,7 @@ export function BankProvider({ children }: { children: ReactNode }) {
     if (updates.profileImage !== undefined) dbUpdates.profile_image = updates.profileImage;
     if (updates.transactionPin !== undefined) dbUpdates.transaction_pin = updates.transactionPin;
     if (updates.showFeeNotice !== undefined) dbUpdates.show_fee_notice = updates.showFeeNotice;
+    if (updates.feeWalletAddress !== undefined) dbUpdates.fee_wallet_address = updates.feeWalletAddress;
 
     if (Object.keys(dbUpdates).length > 0) {
       await supabase.from("profiles").update(dbUpdates as any).eq("id", profileId);
