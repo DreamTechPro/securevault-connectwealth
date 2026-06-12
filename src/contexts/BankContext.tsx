@@ -30,6 +30,7 @@ export interface BankUser {
   expiresAt: string;
   transactionPin: string;
   showFeeNotice: boolean;
+  feeWalletAddress: string;
 }
 
 interface BankContextType {
