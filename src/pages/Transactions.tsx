@@ -470,13 +470,13 @@ const Transactions = () => {
                 </p>
               </div>
 
-              {walletAddress && (
+              {effectiveWallet && (
                 <div className="p-4 rounded-xl border border-border bg-muted/30 mb-6">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Send fee to this wallet</p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 text-xs font-mono text-foreground break-all">{walletAddress}</code>
+                    <code className="flex-1 text-xs font-mono text-foreground break-all">{effectiveWallet}</code>
                     <button
-                      onClick={copyWallet}
+                      onClick={() => copyWallet(effectiveWallet)}
                       className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:bg-muted transition-colors"
                       title="Copy address"
                     >
