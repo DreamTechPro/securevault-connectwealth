@@ -102,7 +102,7 @@ const Register = () => {
             <span className="font-display font-bold text-xl text-foreground">SecureVault</span>
           </div>
 
-          <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-400 transition-colors mb-6">
+          <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-400 transition-colors mb-6">
             <ArrowLeft className="w-4 h-4" />
             Back to sign in
           </Link>
@@ -145,7 +145,7 @@ const Register = () => {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link to="/" className="text-blue-500 font-medium hover:underline">Sign in</Link>
+            <Link to="/login" className="text-blue-500 font-medium hover:underline">Sign in</Link>
           </p>
         </div>
       </div>

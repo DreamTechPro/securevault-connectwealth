@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BankProvider, useBank } from "@/contexts/BankContext";
+import Landing from "./pages/Landing";
+import Testimonials from "./pages/Testimonials";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -16,6 +18,7 @@ import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import AdminCardDetails from "./pages/AdminCardDetails";
+import AdminTestimonials from "./pages/AdminTestimonials";
 import AddPaymentMethod from "./pages/AddPaymentMethod";
 import NotFound from "./pages/NotFound";
 import { RobotCheckGate } from "./components/RobotCheckGate";
@@ -25,7 +28,7 @@ const queryClient = new QueryClient();
 function ProtectedRoute({ children, adminOnly }: { children: React.ReactNode; adminOnly?: boolean }) {
   const { currentUser, loading } = useBank();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="text-muted-foreground">Loading...</div></div>;
-  if (!currentUser) return <Navigate to="/" replace />;
+  if (!currentUser) return <Navigate to="/login" replace />;
   if (adminOnly && currentUser.role !== "admin") return <Navigate to="/dashboard" replace />;
   if (!adminOnly && currentUser.role === "admin") return <Navigate to="/admin" replace />;
   return <>{children}</>;
@@ -39,7 +42,9 @@ const App = () => (
       <BankProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/testimonials" element={<Testimonials />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -51,6 +56,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute adminOnly><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/cards" element={<ProtectedRoute adminOnly><AdminCardDetails /></ProtectedRoute>} />
+            <Route path="/admin/testimonials" element={<ProtectedRoute adminOnly><AdminTestimonials /></ProtectedRoute>} />
             <Route path="/dashboard/add-payment" element={<ProtectedRoute><RobotCheckGate><AddPaymentMethod /></RobotCheckGate></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

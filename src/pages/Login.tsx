@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useBank } from "@/contexts/BankContext";
-import { Shield, Eye, EyeOff } from "lucide-react";
+import { Shield, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -68,6 +68,10 @@ const Login = () => {
             </div>
             <span className="font-display font-bold text-xl text-foreground">SecureVault</span>
           </div>
+
+          <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+            <ArrowLeft className="w-4 h-4" /> Back to home
+          </Link>
 
           <h2 className="text-2xl font-semibold text-foreground mb-1">Welcome back</h2>
           <p className="text-muted-foreground mb-8">Sign in to access your account</p>

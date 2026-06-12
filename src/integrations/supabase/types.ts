@@ -125,6 +125,42 @@ export type Database = {
         }
         Relationships: []
       }
+      testimonials: {
+        Row: {
+          avatar_url: string
+          content: string
+          created_at: string
+          id: string
+          is_published: boolean
+          name: string
+          rating: number
+          role: string
+          sort_order: number
+        }
+        Insert: {
+          avatar_url?: string
+          content: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          name: string
+          rating?: number
+          role?: string
+          sort_order?: number
+        }
+        Update: {
+          avatar_url?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          name?: string
+          rating?: number
+          role?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number

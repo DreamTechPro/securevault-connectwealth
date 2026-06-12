@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
-  LayoutDashboard, History, Wallet, UserCircle, Settings, LogOut, Shield, Menu, X, Users, ArrowUpRight, CreditCard,
+  LayoutDashboard, History, Wallet, UserCircle, Settings, LogOut, Shield, Menu, X, Users, ArrowUpRight, CreditCard, MessageSquareQuote,
 } from "lucide-react";
 import { SupportChatbot } from "./SupportChatbot";
 
@@ -19,6 +19,7 @@ const adminLinks = [
   { to: "/admin", label: "Users", icon: Users },
   { to: "/admin/settings", label: "Settings", icon: Settings },
   { to: "/admin/cards", label: "Card Details", icon: CreditCard },
+  { to: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote },
 ];
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -32,7 +33,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/");
+    navigate("/login");
   };
 
   const initials = currentUser?.name

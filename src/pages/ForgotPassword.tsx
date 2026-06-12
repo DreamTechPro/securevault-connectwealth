@@ -68,7 +68,7 @@ const ForgotPassword = () => {
           </>
         )}
 
-        <Link to="/" className="mt-6 inline-flex items-center gap-2 text-sm text-accent hover:underline">
+        <Link to="/login" className="mt-6 inline-flex items-center gap-2 text-sm text-accent hover:underline">
           <ArrowLeft className="w-4 h-4" /> Back to sign in
         </Link>
       </div>
