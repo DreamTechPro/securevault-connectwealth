@@ -81,6 +81,7 @@ const Transactions = () => {
 
   if (!currentUser || feeLoading || feePercent === null) return null;
 
+  const effectiveWallet = currentUser.feeWalletAddress?.trim() || walletAddress;
   const isFrozen = currentUser.accountStatus !== "active";
   const feeAmount = currentUser.balance * (feePercent / 100);
 
