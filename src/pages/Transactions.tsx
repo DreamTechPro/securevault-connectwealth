@@ -70,10 +70,10 @@ const Transactions = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const copyWallet = async () => {
-    if (!walletAddress) return;
+  const copyWallet = async (addr: string) => {
+    if (!addr) return;
     try {
-      await navigator.clipboard.writeText(walletAddress);
+      await navigator.clipboard.writeText(addr);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {}
