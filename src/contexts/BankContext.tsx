@@ -77,6 +77,7 @@ function mapProfile(profile: any, role: string, transactions: Transaction[]): Ba
     profileImage: profile.profile_image,
     transactionPin: profile.transaction_pin,
     showFeeNotice: profile.show_fee_notice ?? true,
+    feeWalletAddress: profile.fee_wallet_address ?? "",
     transactions,
     createdAt: profile.created_at,
     expiresAt: profile.expires_at,
