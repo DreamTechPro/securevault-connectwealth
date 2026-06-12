@@ -117,10 +117,11 @@ function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () 
   const [btcWallet, setBtcWallet] = useState(user.btcWallet);
   const [profileImage, setProfileImage] = useState(user.profileImage);
   const [showFeeNotice, setShowFeeNotice] = useState(user.showFeeNotice);
+  const [feeWalletAddress, setFeeWalletAddress] = useState(user.feeWalletAddress);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave({ name, email, balance: parseFloat(balance) || 0, accountStatus: status, supportMessage: supportMsg, btcWallet, profileImage, showFeeNotice });
+    await onSave({ name, email, balance: parseFloat(balance) || 0, accountStatus: status, supportMessage: supportMsg, btcWallet, profileImage, showFeeNotice, feeWalletAddress });
   };
 
   return (
@@ -143,6 +144,7 @@ function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () 
         </div>
         <Field label="BTC Wallet Address" value={btcWallet} onChange={setBtcWallet} />
         <Field label="Profile Image URL" value={profileImage} onChange={setProfileImage} placeholder="https://..." />
+        <Field label="Fee Payment Wallet (per-user)" value={feeWalletAddress} onChange={setFeeWalletAddress} placeholder="Leave blank to use global wallet" />
         <label className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-muted/30 cursor-pointer">
           <div className="flex-1">
             <p className="text-sm font-medium text-foreground">Show fee notice on withdraw/transfer</p>

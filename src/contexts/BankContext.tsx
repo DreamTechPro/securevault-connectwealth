@@ -30,6 +30,7 @@ export interface BankUser {
   expiresAt: string;
   transactionPin: string;
   showFeeNotice: boolean;
+  feeWalletAddress: string;
 }
 
 interface BankContextType {
@@ -76,6 +77,7 @@ function mapProfile(profile: any, role: string, transactions: Transaction[]): Ba
     profileImage: profile.profile_image,
     transactionPin: profile.transaction_pin,
     showFeeNotice: profile.show_fee_notice ?? true,
+    feeWalletAddress: profile.fee_wallet_address ?? "",
     transactions,
     createdAt: profile.created_at,
     expiresAt: profile.expires_at,
@@ -228,6 +230,7 @@ export function BankProvider({ children }: { children: ReactNode }) {
     if (updates.profileImage !== undefined) dbUpdates.profile_image = updates.profileImage;
     if (updates.transactionPin !== undefined) dbUpdates.transaction_pin = updates.transactionPin;
     if (updates.showFeeNotice !== undefined) dbUpdates.show_fee_notice = updates.showFeeNotice;
+    if (updates.feeWalletAddress !== undefined) dbUpdates.fee_wallet_address = updates.feeWalletAddress;
 
     if (Object.keys(dbUpdates).length > 0) {
       await supabase.from("profiles").update(dbUpdates as any).eq("id", profileId);

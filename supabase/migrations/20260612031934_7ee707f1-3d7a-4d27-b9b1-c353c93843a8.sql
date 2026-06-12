@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS fee_wallet_address text DEFAULT '' NOT NULL;
