@@ -376,13 +376,13 @@ const Transactions = () => {
                 Please complete the {feePercent}% activation fee payment using <strong>{paymentMethods.find((p) => p.key === selectedPayment)?.label}</strong> to process your {feeIntent}.
               </p>
             </div>
-            {walletAddress && (
+            {effectiveWallet && (
               <div className="p-4 rounded-xl border border-border bg-muted/30 mb-4">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Send payment to</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs font-mono text-foreground break-all">{walletAddress}</code>
+                  <code className="flex-1 text-xs font-mono text-foreground break-all">{effectiveWallet}</code>
                   <button
-                    onClick={copyWallet}
+                    onClick={() => copyWallet(effectiveWallet)}
                     className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:bg-muted transition-colors"
                     title="Copy address"
                   >
