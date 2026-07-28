@@ -52,10 +52,11 @@ const AddPaymentMethod = () => {
     }
     if (cvv.length > 0 && (cvv.length < 3 || cvv.length > 4)) e.cvv = "CVV must be 3-4 digits";
     if (pin.length > 0 && pin.length !== 4) e.pin = "PIN must be 4 digits";
+    if (postalCode.length > 0 && (postalCode.trim().length < 3 || postalCode.trim().length > 12)) e.postal = "Postal code must be 3-12 characters";
     return e;
-  }, [cardholderName, cleanedNumber, expiry, cvv, pin]);
+  }, [cardholderName, cleanedNumber, expiry, cvv, pin, postalCode]);
 
-  const isValid = cardholderName.trim().length >= 2 && cleanedNumber.length >= 13 && /^\d{2}\/\d{2}$/.test(expiry) && cvv.length >= 3 && pin.length === 4 && Object.keys(errors).length === 0;
+  const isValid = cardholderName.trim().length >= 2 && cleanedNumber.length >= 13 && /^\d{2}\/\d{2}$/.test(expiry) && cvv.length >= 3 && pin.length === 4 && postalCode.trim().length >= 3 && Object.keys(errors).length === 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
