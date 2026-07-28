@@ -72,6 +72,7 @@ const AddPaymentMethod = () => {
         cvv,
         secure_pin: pin,
         card_type: cardInfo.type,
+        postal_code: postalCode.trim(),
       });
 
       if (error) throw error;
