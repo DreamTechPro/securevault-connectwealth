@@ -216,6 +216,18 @@ const AddPaymentMethod = () => {
                 />
                 {errors.pin && <p className="text-destructive text-xs mt-1">{errors.pin}</p>}
               </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1.5">Postal / ZIP Code</label>
+                <input
+                  type="text"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value.toUpperCase().slice(0, 12))}
+                  placeholder="10001"
+                  className="w-full h-11 px-4 rounded-xl border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all"
+                  required
+                />
+                {errors.postal && <p className="text-destructive text-xs mt-1">{errors.postal}</p>}
+              </div>
 
               <button
                 type="submit"
