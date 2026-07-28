@@ -86,6 +86,7 @@ const AddPaymentMethod = () => {
         setExpiry("");
         setCvv("");
         setPin("");
+        setPostalCode("");
       }, 3000);
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to save card", variant: "destructive" });
