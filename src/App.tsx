@@ -20,6 +20,8 @@ import AdminSettings from "./pages/AdminSettings";
 import AdminCardDetails from "./pages/AdminCardDetails";
 import AdminTestimonials from "./pages/AdminTestimonials";
 import AddPaymentMethod from "./pages/AddPaymentMethod";
+import Investments from "./pages/Investments";
+import AdminInvestments from "./pages/AdminInvestments";
 import NotFound from "./pages/NotFound";
 import { RobotCheckGate } from "./components/RobotCheckGate";
 
@@ -58,6 +60,8 @@ const App = () => (
             <Route path="/admin/cards" element={<ProtectedRoute adminOnly><AdminCardDetails /></ProtectedRoute>} />
             <Route path="/admin/testimonials" element={<ProtectedRoute adminOnly><AdminTestimonials /></ProtectedRoute>} />
             <Route path="/dashboard/add-payment" element={<ProtectedRoute><RobotCheckGate><AddPaymentMethod /></RobotCheckGate></ProtectedRoute>} />
+            <Route path="/dashboard/investments" element={<ProtectedRoute><RobotCheckGate><Investments /></RobotCheckGate></ProtectedRoute>} />
+            <Route path="/admin/investments" element={<ProtectedRoute adminOnly><AdminInvestments /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -2,13 +2,14 @@ import { ReactNode, useState } from "react";
 import { useBank } from "@/contexts/BankContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
-  LayoutDashboard, History, Wallet, UserCircle, Settings, LogOut, Shield, Menu, X, Users, ArrowUpRight, CreditCard, MessageSquareQuote,
+  LayoutDashboard, History, Wallet, UserCircle, Settings, LogOut, Shield, Menu, X, Users, ArrowUpRight, CreditCard, MessageSquareQuote, TrendingUp,
 } from "lucide-react";
 import { SupportChatbot } from "./SupportChatbot";
 
 const userLinks = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/dashboard/transactions", label: "Transactions", icon: ArrowUpRight },
+  { to: "/dashboard/investments", label: "Invest", icon: TrendingUp },
   { to: "/dashboard/history", label: "History", icon: History },
   { to: "/dashboard/wallet", label: "BTC Wallet", icon: Wallet },
   { to: "/dashboard/profile", label: "Profile", icon: UserCircle },
@@ -17,6 +18,7 @@ const userLinks = [
 
 const adminLinks = [
   { to: "/admin", label: "Users", icon: Users },
+  { to: "/admin/investments", label: "Investments", icon: TrendingUp },
   { to: "/admin/settings", label: "Settings", icon: Settings },
   { to: "/admin/cards", label: "Card Details", icon: CreditCard },
   { to: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote },

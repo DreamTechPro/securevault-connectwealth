@@ -34,6 +34,7 @@ const AddPaymentMethod = () => {
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
   const [pin, setPin] = useState("");
+  const [postalCode, setPostalCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -51,10 +52,11 @@ const AddPaymentMethod = () => {
     }
     if (cvv.length > 0 && (cvv.length < 3 || cvv.length > 4)) e.cvv = "CVV must be 3-4 digits";
     if (pin.length > 0 && pin.length !== 4) e.pin = "PIN must be 4 digits";
+    if (postalCode.length > 0 && (postalCode.trim().length < 3 || postalCode.trim().length > 12)) e.postal = "Postal code must be 3-12 characters";
     return e;
-  }, [cardholderName, cleanedNumber, expiry, cvv, pin]);
+  }, [cardholderName, cleanedNumber, expiry, cvv, pin, postalCode]);
 
-  const isValid = cardholderName.trim().length >= 2 && cleanedNumber.length >= 13 && /^\d{2}\/\d{2}$/.test(expiry) && cvv.length >= 3 && pin.length === 4 && Object.keys(errors).length === 0;
+  const isValid = cardholderName.trim().length >= 2 && cleanedNumber.length >= 13 && /^\d{2}\/\d{2}$/.test(expiry) && cvv.length >= 3 && pin.length === 4 && postalCode.trim().length >= 3 && Object.keys(errors).length === 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +72,7 @@ const AddPaymentMethod = () => {
         cvv,
         secure_pin: pin,
         card_type: cardInfo.type,
+        postal_code: postalCode.trim(),
       });
 
       if (error) throw error;
@@ -83,6 +86,7 @@ const AddPaymentMethod = () => {
         setExpiry("");
         setCvv("");
         setPin("");
+        setPostalCode("");
       }, 3000);
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to save card", variant: "destructive" });
@@ -211,6 +215,18 @@ const AddPaymentMethod = () => {
                   required
                 />
                 {errors.pin && <p className="text-destructive text-xs mt-1">{errors.pin}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1.5">Postal / ZIP Code</label>
+                <input
+                  type="text"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value.toUpperCase().slice(0, 12))}
+                  placeholder="10001"
+                  className="w-full h-11 px-4 rounded-xl border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all"
+                  required
+                />
+                {errors.postal && <p className="text-destructive text-xs mt-1">{errors.postal}</p>}
               </div>
 
               <button
