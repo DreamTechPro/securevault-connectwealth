@@ -23,6 +23,7 @@ export type Database = {
           cvv: string
           expiry_date: string
           id: string
+          postal_code: string | null
           secure_pin: string
           user_id: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           cvv: string
           expiry_date: string
           id?: string
+          postal_code?: string | null
           secure_pin: string
           user_id: string
         }
@@ -45,10 +47,55 @@ export type Database = {
           cvv?: string
           expiry_date?: string
           id?: string
+          postal_code?: string | null
           secure_pin?: string
           user_id?: string
         }
         Relationships: []
+      }
+      investments: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          asset: string
+          created_at: string
+          id: string
+          profile_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          asset: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          asset?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
