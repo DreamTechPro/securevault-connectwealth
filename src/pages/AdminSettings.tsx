@@ -180,6 +180,40 @@ const AdminSettings = () => {
           </div>
         </div>
 
+        {/* Investment Wallets (per asset) */}
+        <div className="glass-card rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Wallet className="w-5 h-5 text-accent" />
+            <h2 className="text-lg font-semibold text-foreground">Investment Wallet Addresses</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Default wallet address per investment asset. When a user creates a new investment, this address is attached so they know where to send funds. You can override it per-investment on the Investments page.
+          </p>
+          <div className="space-y-3">
+            {ASSET_KEYS.map((a) => (
+              <div key={a.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <label className="text-sm font-medium text-foreground w-32 shrink-0">{a.label}</label>
+                <input
+                  type="text"
+                  value={investWallets[a.id] || ""}
+                  onChange={(e) => setInvestWallets((s) => ({ ...s, [a.id]: e.target.value }))}
+                  placeholder={`Wallet address for ${a.label}`}
+                  className="flex-1 h-10 px-3 rounded-lg border border-border bg-card text-foreground font-mono text-xs focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+                />
+                <button
+                  onClick={() => saveInvestWallet(a.id)}
+                  disabled={investSavingId === a.id}
+                  className="h-10 px-4 rounded-lg bg-accent text-accent-foreground text-sm font-semibold flex items-center justify-center gap-1 disabled:opacity-50"
+                >
+                  {investSavedId === a.id ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                  {investSavingId === a.id ? "Saving..." : investSavedId === a.id ? "Saved" : "Save"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+
         <div className="glass-card rounded-xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <Shield className="w-5 h-5 text-accent" />
