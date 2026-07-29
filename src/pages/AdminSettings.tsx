@@ -19,18 +19,48 @@ const AdminSettings = () => {
   const [walletSaving, setWalletSaving] = useState(false);
   const [walletSaved, setWalletSaved] = useState(false);
 
+  const ASSET_KEYS = [
+    { id: "gold", label: "Gold" },
+    { id: "silver", label: "Silver" },
+    { id: "real_estate", label: "Real Estate" },
+    { id: "stocks", label: "Stocks Index" },
+    { id: "green_energy", label: "Green Energy" },
+  ];
+  const [investWallets, setInvestWallets] = useState<Record<string, string>>({});
+  const [investSavingId, setInvestSavingId] = useState<string | null>(null);
+  const [investSavedId, setInvestSavedId] = useState<string | null>(null);
+
   useEffect(() => {
+    const keys = ["withdrawal_fee_percent", "activation_wallet_address", ...ASSET_KEYS.map((a) => `invest_wallet_${a.id}`)];
     supabase
       .from("site_settings")
       .select("key,value")
-      .in("key", ["withdrawal_fee_percent", "activation_wallet_address"])
+      .in("key", keys)
       .then(({ data }) => {
+        const iw: Record<string, string> = {};
         data?.forEach((row: any) => {
           if (row.key === "withdrawal_fee_percent") setFeePercent(row.value);
-          if (row.key === "activation_wallet_address") setWalletAddress(row.value);
+          else if (row.key === "activation_wallet_address") setWalletAddress(row.value);
+          else if (row.key.startsWith("invest_wallet_")) iw[row.key.replace("invest_wallet_", "")] = row.value;
         });
+        setInvestWallets(iw);
       });
   }, []);
+
+  const saveInvestWallet = async (assetId: string) => {
+    const key = `invest_wallet_${assetId}`;
+    const val = (investWallets[assetId] || "").trim();
+    setInvestSavingId(assetId);
+    const { data: existing } = await supabase.from("site_settings").select("id").eq("key", key).maybeSingle();
+    if (existing) {
+      await supabase.from("site_settings").update({ value: val, updated_at: new Date().toISOString() }).eq("key", key);
+    } else {
+      await supabase.from("site_settings").insert({ key, value: val });
+    }
+    setInvestSavingId(null);
+    setInvestSavedId(assetId);
+    setTimeout(() => setInvestSavedId(null), 1500);
+  };
 
   const handleSaveFee = async () => {
     const val = parseFloat(feePercent);
