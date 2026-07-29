@@ -59,33 +59,45 @@ export type Database = {
           amount: number
           asset: string
           created_at: string
+          duration_days: number
           id: string
+          interest_rate: number
+          plan: string
           profile_id: string
           status: string
           updated_at: string
           user_id: string
+          wallet_address: string
         }
         Insert: {
           admin_note?: string | null
           amount: number
           asset: string
           created_at?: string
+          duration_days?: number
           id?: string
+          interest_rate?: number
+          plan?: string
           profile_id: string
           status?: string
           updated_at?: string
           user_id: string
+          wallet_address?: string
         }
         Update: {
           admin_note?: string | null
           amount?: number
           asset?: string
           created_at?: string
+          duration_days?: number
           id?: string
+          interest_rate?: number
+          plan?: string
           profile_id?: string
           status?: string
           updated_at?: string
           user_id?: string
+          wallet_address?: string
         }
         Relationships: [
           {

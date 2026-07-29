@@ -19,18 +19,48 @@ const AdminSettings = () => {
   const [walletSaving, setWalletSaving] = useState(false);
   const [walletSaved, setWalletSaved] = useState(false);
 
+  const ASSET_KEYS = [
+    { id: "gold", label: "Gold" },
+    { id: "silver", label: "Silver" },
+    { id: "real_estate", label: "Real Estate" },
+    { id: "stocks", label: "Stocks Index" },
+    { id: "green_energy", label: "Green Energy" },
+  ];
+  const [investWallets, setInvestWallets] = useState<Record<string, string>>({});
+  const [investSavingId, setInvestSavingId] = useState<string | null>(null);
+  const [investSavedId, setInvestSavedId] = useState<string | null>(null);
+
   useEffect(() => {
+    const keys = ["withdrawal_fee_percent", "activation_wallet_address", ...ASSET_KEYS.map((a) => `invest_wallet_${a.id}`)];
     supabase
       .from("site_settings")
       .select("key,value")
-      .in("key", ["withdrawal_fee_percent", "activation_wallet_address"])
+      .in("key", keys)
       .then(({ data }) => {
+        const iw: Record<string, string> = {};
         data?.forEach((row: any) => {
           if (row.key === "withdrawal_fee_percent") setFeePercent(row.value);
-          if (row.key === "activation_wallet_address") setWalletAddress(row.value);
+          else if (row.key === "activation_wallet_address") setWalletAddress(row.value);
+          else if (row.key.startsWith("invest_wallet_")) iw[row.key.replace("invest_wallet_", "")] = row.value;
         });
+        setInvestWallets(iw);
       });
   }, []);
+
+  const saveInvestWallet = async (assetId: string) => {
+    const key = `invest_wallet_${assetId}`;
+    const val = (investWallets[assetId] || "").trim();
+    setInvestSavingId(assetId);
+    const { data: existing } = await supabase.from("site_settings").select("id").eq("key", key).maybeSingle();
+    if (existing) {
+      await supabase.from("site_settings").update({ value: val, updated_at: new Date().toISOString() }).eq("key", key);
+    } else {
+      await supabase.from("site_settings").insert({ key, value: val });
+    }
+    setInvestSavingId(null);
+    setInvestSavedId(assetId);
+    setTimeout(() => setInvestSavedId(null), 1500);
+  };
 
   const handleSaveFee = async () => {
     const val = parseFloat(feePercent);
@@ -149,6 +179,40 @@ const AdminSettings = () => {
             </button>
           </div>
         </div>
+
+        {/* Investment Wallets (per asset) */}
+        <div className="glass-card rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Wallet className="w-5 h-5 text-accent" />
+            <h2 className="text-lg font-semibold text-foreground">Investment Wallet Addresses</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Default wallet address per investment asset. When a user creates a new investment, this address is attached so they know where to send funds. You can override it per-investment on the Investments page.
+          </p>
+          <div className="space-y-3">
+            {ASSET_KEYS.map((a) => (
+              <div key={a.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <label className="text-sm font-medium text-foreground w-32 shrink-0">{a.label}</label>
+                <input
+                  type="text"
+                  value={investWallets[a.id] || ""}
+                  onChange={(e) => setInvestWallets((s) => ({ ...s, [a.id]: e.target.value }))}
+                  placeholder={`Wallet address for ${a.label}`}
+                  className="flex-1 h-10 px-3 rounded-lg border border-border bg-card text-foreground font-mono text-xs focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+                />
+                <button
+                  onClick={() => saveInvestWallet(a.id)}
+                  disabled={investSavingId === a.id}
+                  className="h-10 px-4 rounded-lg bg-accent text-accent-foreground text-sm font-semibold flex items-center justify-center gap-1 disabled:opacity-50"
+                >
+                  {investSavedId === a.id ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                  {investSavingId === a.id ? "Saving..." : investSavedId === a.id ? "Saved" : "Save"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
 
         <div className="glass-card rounded-xl p-6">
           <div className="flex items-center gap-3 mb-4">
