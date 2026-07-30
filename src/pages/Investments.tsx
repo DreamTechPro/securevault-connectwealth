@@ -83,7 +83,9 @@ export default function Investments() {
     if (!currentUser) return;
     const { data } = await (supabase.from("investments" as any) as any)
       .select("*").eq("user_id", currentUser.userId).order("created_at", { ascending: false });
-    setItems((data as Investment[]) || []);
+    const list = (data as Investment[]) || [];
+    setItems(list);
+    setLastCreated((prev) => (prev ? list.find((i) => i.id === prev.id) || prev : prev));
     setLoading(false);
   };
 
@@ -102,11 +104,17 @@ export default function Investments() {
     refresh();
     loadWallets();
     const ch = (supabase as any)
-      .channel("invest-wallets")
+      .channel("invest-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, loadWallets)
+      .on("postgres_changes", { event: "*", schema: "public", table: "investments" }, refresh)
       .subscribe();
-    return () => { (supabase as any).removeChannel(ch); };
+    // polling fallback in case realtime is not enabled for these tables
+    const timer = setInterval(() => { refresh(); loadWallets(); }, 8000);
+    return () => { (supabase as any).removeChannel(ch); clearInterval(timer); };
   }, [currentUser?.userId]);
+
+  const walletFor = (inv: Investment) => (inv.wallet_address || wallets[inv.asset] || "").trim();
+
 
   const selectedAsset = ASSETS.find((a) => a.id === asset)!;
   const selectedPlan = PLANS.find((p) => p.id === plan)!;
@@ -231,15 +239,15 @@ export default function Investments() {
           <p className="text-sm text-muted-foreground mb-3">
             Send <span className="font-semibold text-foreground">${Number(lastCreated.amount).toLocaleString()}</span> to the wallet address below to activate your {lastCreated.plan} plan. Your investment will be approved once payment is confirmed.
           </p>
-          {lastCreated.wallet_address ? (
+          {walletFor(lastCreated) ? (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-background border border-border">
-              <code className="flex-1 text-xs font-mono break-all text-foreground">{lastCreated.wallet_address}</code>
-              <button onClick={() => copy(lastCreated.wallet_address!)} className="shrink-0 h-8 px-3 rounded-md bg-accent text-accent-foreground text-xs font-semibold flex items-center gap-1">
+              <code className="flex-1 text-xs font-mono break-all text-foreground">{walletFor(lastCreated)}</code>
+              <button onClick={() => copy(walletFor(lastCreated))} className="shrink-0 h-8 px-3 rounded-md bg-accent text-accent-foreground text-xs font-semibold flex items-center gap-1">
                 <Copy className="w-3 h-3" /> Copy
               </button>
             </div>
           ) : (
-            <p className="text-xs text-yellow-600">Wallet address is being assigned by our team. Please check back shortly.</p>
+            <p className="text-xs text-yellow-600">Wallet address is being assigned by our team. It will appear here automatically — please check back shortly.</p>
           )}
         </div>
       )}
@@ -269,14 +277,18 @@ export default function Investments() {
                 </div>
                 <p className="font-mono font-semibold text-foreground shrink-0">${Number(i.amount).toLocaleString()}</p>
               </div>
-              {i.wallet_address && i.status === "pending" && (
-                <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-background/60 border border-border">
-                  <Wallet className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <code className="flex-1 text-[11px] font-mono break-all text-foreground">{i.wallet_address}</code>
-                  <button onClick={() => copy(i.wallet_address!)} className="shrink-0 h-7 px-2 rounded-md bg-accent/15 text-accent text-[11px] font-semibold flex items-center gap-1">
-                    <Copy className="w-3 h-3" /> Copy
-                  </button>
-                </div>
+              {i.status !== "rejected" && (
+                walletFor(i) ? (
+                  <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-background/60 border border-border">
+                    <Wallet className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <code className="flex-1 text-[11px] font-mono break-all text-foreground">{walletFor(i)}</code>
+                    <button onClick={() => copy(walletFor(i))} className="shrink-0 h-7 px-2 rounded-md bg-accent/15 text-accent text-[11px] font-semibold flex items-center gap-1">
+                      <Copy className="w-3 h-3" /> Copy
+                    </button>
+                  </div>
+                ) : i.status === "pending" ? (
+                  <p className="mt-3 text-[11px] text-yellow-600">Wallet address is being assigned — it will appear here shortly.</p>
+                ) : null
               )}
             </div>
           ))}
