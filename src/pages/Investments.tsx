@@ -277,14 +277,18 @@ export default function Investments() {
                 </div>
                 <p className="font-mono font-semibold text-foreground shrink-0">${Number(i.amount).toLocaleString()}</p>
               </div>
-              {i.wallet_address && i.status === "pending" && (
-                <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-background/60 border border-border">
-                  <Wallet className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <code className="flex-1 text-[11px] font-mono break-all text-foreground">{i.wallet_address}</code>
-                  <button onClick={() => copy(i.wallet_address!)} className="shrink-0 h-7 px-2 rounded-md bg-accent/15 text-accent text-[11px] font-semibold flex items-center gap-1">
-                    <Copy className="w-3 h-3" /> Copy
-                  </button>
-                </div>
+              {i.status !== "rejected" && (
+                walletFor(i) ? (
+                  <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-background/60 border border-border">
+                    <Wallet className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <code className="flex-1 text-[11px] font-mono break-all text-foreground">{walletFor(i)}</code>
+                    <button onClick={() => copy(walletFor(i))} className="shrink-0 h-7 px-2 rounded-md bg-accent/15 text-accent text-[11px] font-semibold flex items-center gap-1">
+                      <Copy className="w-3 h-3" /> Copy
+                    </button>
+                  </div>
+                ) : i.status === "pending" ? (
+                  <p className="mt-3 text-[11px] text-yellow-600">Wallet address is being assigned — it will appear here shortly.</p>
+                ) : null
               )}
             </div>
           ))}
