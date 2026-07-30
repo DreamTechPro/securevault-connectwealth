@@ -240,15 +240,24 @@ export default function Investments() {
             Send <span className="font-semibold text-foreground">${Number(lastCreated.amount).toLocaleString()}</span> to the wallet address below to activate your {lastCreated.plan} plan. Your investment will be approved once payment is confirmed.
           </p>
           {walletFor(lastCreated) ? (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-background border border-border">
-              <code className="flex-1 text-xs font-mono break-all text-foreground">{walletFor(lastCreated)}</code>
-              <button onClick={() => copy(walletFor(lastCreated))} className="shrink-0 h-8 px-3 rounded-md bg-accent text-accent-foreground text-xs font-semibold flex items-center gap-1">
-                <Copy className="w-3 h-3" /> Copy
-              </button>
-            </div>
+            <>
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-background border border-border">
+                <code className="flex-1 text-xs font-mono break-all text-foreground">{walletFor(lastCreated)}</code>
+                <button onClick={() => copy(walletFor(lastCreated))} className="shrink-0 h-8 px-3 rounded-md bg-accent text-accent-foreground text-xs font-semibold flex items-center gap-1">
+                  <Copy className="w-3 h-3" /> Copy
+                </button>
+              </div>
+              <div className="mt-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                <p className="text-xs font-semibold text-yellow-600 mb-1">Important — Bitcoin (BTC) payments only</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  In line with company standards, only funds sent in Bitcoin (BTC) to the address above are recognised. Any payment made in another currency, asset or network will not be accepted, cannot be credited to your account and may be permanently lost. For your security, always use the <span className="font-semibold text-foreground">Copy</span> button and paste the address directly into your wallet — never type it manually — to avoid sending funds to the wrong account or losing them through an input error.
+                </p>
+              </div>
+            </>
           ) : (
             <p className="text-xs text-yellow-600">Wallet address is being assigned by our team. It will appear here automatically — please check back shortly.</p>
           )}
+
         </div>
       )}
 
@@ -279,13 +288,19 @@ export default function Investments() {
               </div>
               {i.status !== "rejected" && (
                 walletFor(i) ? (
-                  <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-background/60 border border-border">
-                    <Wallet className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    <code className="flex-1 text-[11px] font-mono break-all text-foreground">{walletFor(i)}</code>
-                    <button onClick={() => copy(walletFor(i))} className="shrink-0 h-7 px-2 rounded-md bg-accent/15 text-accent text-[11px] font-semibold flex items-center gap-1">
-                      <Copy className="w-3 h-3" /> Copy
-                    </button>
+                  <div className="mt-3">
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-background/60 border border-border">
+                      <Wallet className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <code className="flex-1 text-[11px] font-mono break-all text-foreground">{walletFor(i)}</code>
+                      <button onClick={() => copy(walletFor(i))} className="shrink-0 h-7 px-2 rounded-md bg-accent/15 text-accent text-[11px] font-semibold flex items-center gap-1">
+                        <Copy className="w-3 h-3" /> Copy
+                      </button>
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
+                      <span className="font-semibold text-yellow-600">Bitcoin (BTC) only:</span> payments made in any other currency or network are not recognised and will not be accepted. Please use the Copy button and paste the address into your wallet to avoid sending to the wrong account.
+                    </p>
                   </div>
+
                 ) : i.status === "pending" ? (
                   <p className="mt-3 text-[11px] text-yellow-600">Wallet address is being assigned — it will appear here shortly.</p>
                 ) : null
