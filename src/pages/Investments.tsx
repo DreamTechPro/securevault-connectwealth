@@ -288,13 +288,19 @@ export default function Investments() {
               </div>
               {i.status !== "rejected" && (
                 walletFor(i) ? (
-                  <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-background/60 border border-border">
-                    <Wallet className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    <code className="flex-1 text-[11px] font-mono break-all text-foreground">{walletFor(i)}</code>
-                    <button onClick={() => copy(walletFor(i))} className="shrink-0 h-7 px-2 rounded-md bg-accent/15 text-accent text-[11px] font-semibold flex items-center gap-1">
-                      <Copy className="w-3 h-3" /> Copy
-                    </button>
+                  <div className="mt-3">
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-background/60 border border-border">
+                      <Wallet className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <code className="flex-1 text-[11px] font-mono break-all text-foreground">{walletFor(i)}</code>
+                      <button onClick={() => copy(walletFor(i))} className="shrink-0 h-7 px-2 rounded-md bg-accent/15 text-accent text-[11px] font-semibold flex items-center gap-1">
+                        <Copy className="w-3 h-3" /> Copy
+                      </button>
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
+                      <span className="font-semibold text-yellow-600">Bitcoin (BTC) only:</span> payments made in any other currency or network are not recognised and will not be accepted. Please use the Copy button and paste the address into your wallet to avoid sending to the wrong account.
+                    </p>
                   </div>
+
                 ) : i.status === "pending" ? (
                   <p className="mt-3 text-[11px] text-yellow-600">Wallet address is being assigned — it will appear here shortly.</p>
                 ) : null
