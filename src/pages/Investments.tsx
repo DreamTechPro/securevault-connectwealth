@@ -239,15 +239,15 @@ export default function Investments() {
           <p className="text-sm text-muted-foreground mb-3">
             Send <span className="font-semibold text-foreground">${Number(lastCreated.amount).toLocaleString()}</span> to the wallet address below to activate your {lastCreated.plan} plan. Your investment will be approved once payment is confirmed.
           </p>
-          {lastCreated.wallet_address ? (
+          {walletFor(lastCreated) ? (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-background border border-border">
-              <code className="flex-1 text-xs font-mono break-all text-foreground">{lastCreated.wallet_address}</code>
-              <button onClick={() => copy(lastCreated.wallet_address!)} className="shrink-0 h-8 px-3 rounded-md bg-accent text-accent-foreground text-xs font-semibold flex items-center gap-1">
+              <code className="flex-1 text-xs font-mono break-all text-foreground">{walletFor(lastCreated)}</code>
+              <button onClick={() => copy(walletFor(lastCreated))} className="shrink-0 h-8 px-3 rounded-md bg-accent text-accent-foreground text-xs font-semibold flex items-center gap-1">
                 <Copy className="w-3 h-3" /> Copy
               </button>
             </div>
           ) : (
-            <p className="text-xs text-yellow-600">Wallet address is being assigned by our team. Please check back shortly.</p>
+            <p className="text-xs text-yellow-600">Wallet address is being assigned by our team. It will appear here automatically — please check back shortly.</p>
           )}
         </div>
       )}
