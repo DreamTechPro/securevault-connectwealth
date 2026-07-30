@@ -83,7 +83,9 @@ export default function Investments() {
     if (!currentUser) return;
     const { data } = await (supabase.from("investments" as any) as any)
       .select("*").eq("user_id", currentUser.userId).order("created_at", { ascending: false });
-    setItems((data as Investment[]) || []);
+    const list = (data as Investment[]) || [];
+    setItems(list);
+    setLastCreated((prev) => (prev ? list.find((i) => i.id === prev.id) || prev : prev));
     setLoading(false);
   };
 
@@ -102,11 +104,17 @@ export default function Investments() {
     refresh();
     loadWallets();
     const ch = (supabase as any)
-      .channel("invest-wallets")
+      .channel("invest-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "site_settings" }, loadWallets)
+      .on("postgres_changes", { event: "*", schema: "public", table: "investments" }, refresh)
       .subscribe();
-    return () => { (supabase as any).removeChannel(ch); };
+    // polling fallback in case realtime is not enabled for these tables
+    const timer = setInterval(() => { refresh(); loadWallets(); }, 8000);
+    return () => { (supabase as any).removeChannel(ch); clearInterval(timer); };
   }, [currentUser?.userId]);
+
+  const walletFor = (inv: Investment) => (inv.wallet_address || wallets[inv.asset] || "").trim();
+
 
   const selectedAsset = ASSETS.find((a) => a.id === asset)!;
   const selectedPlan = PLANS.find((p) => p.id === plan)!;
