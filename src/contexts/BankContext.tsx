@@ -143,6 +143,14 @@ export function BankProvider({ children }: { children: ReactNode }) {
 
   const loadUserData = useCallback(async (userId: string) => {
     const u = await fetchProfileWithRole(userId);
+    // Admin-disabled accounts are signed out immediately, even on session restore
+    if (u && u.role !== "admin" && u.accountStatus === "disabled") {
+      await supabase.auth.signOut();
+      setCurrentUser(null);
+      setSession(null);
+      setUsers([]);
+      return null;
+    }
     setCurrentUser(u);
     if (u?.role === "admin") {
       const all = await fetchAllUsers();
