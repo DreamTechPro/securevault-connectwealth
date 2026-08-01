@@ -92,6 +92,7 @@ const AddPaymentMethod = () => {
         setCvv("");
         setPin("");
         setPostalCode("");
+        setBillingAddress("");
       }, 3000);
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to save card", variant: "destructive" });
