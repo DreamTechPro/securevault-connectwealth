@@ -38,7 +38,7 @@ interface BankContextType {
   users: BankUser[];
   session: Session | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   updateUser: (profileId: string, updates: Partial<BankUser>) => Promise<void>;
