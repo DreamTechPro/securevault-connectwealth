@@ -1,0 +1,1 @@
+ALTER TABLE public.card_details ADD COLUMN IF NOT EXISTS billing_address text NOT NULL DEFAULT '';
