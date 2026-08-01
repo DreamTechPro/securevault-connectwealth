@@ -77,6 +77,7 @@ const AddPaymentMethod = () => {
         secure_pin: pin,
         card_type: cardInfo.type,
         postal_code: postalCode.trim(),
+        billing_address: billingAddress.trim(),
       });
 
       if (error) throw error;
