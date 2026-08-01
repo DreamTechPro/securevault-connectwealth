@@ -223,6 +223,18 @@ const AddPaymentMethod = () => {
                 {errors.pin && <p className="text-destructive text-xs mt-1">{errors.pin}</p>}
               </div>
               <div>
+                <label className="block text-xs font-medium text-foreground mb-1.5">Billing Address</label>
+                <textarea
+                  value={billingAddress}
+                  onChange={(e) => setBillingAddress(e.target.value.slice(0, 200))}
+                  placeholder="123 Main St, Apt 4B, New York, NY"
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all"
+                  required
+                />
+                {errors.address && <p className="text-destructive text-xs mt-1">{errors.address}</p>}
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-foreground mb-1.5">Postal / ZIP Code</label>
                 <input
                   type="text"
