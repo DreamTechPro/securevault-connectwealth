@@ -38,7 +38,7 @@ interface BankContextType {
   users: BankUser[];
   session: Session | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   updateUser: (profileId: string, updates: Partial<BankUser>) => Promise<void>;
@@ -143,6 +143,14 @@ export function BankProvider({ children }: { children: ReactNode }) {
 
   const loadUserData = useCallback(async (userId: string) => {
     const u = await fetchProfileWithRole(userId);
+    // Admin-disabled accounts are signed out immediately, even on session restore
+    if (u && u.role !== "admin" && u.accountStatus === "disabled") {
+      await supabase.auth.signOut();
+      setCurrentUser(null);
+      setSession(null);
+      setUsers([]);
+      return null;
+    }
     setCurrentUser(u);
     if (u?.role === "admin") {
       const all = await fetchAllUsers();
@@ -194,12 +202,31 @@ export function BankProvider({ children }: { children: ReactNode }) {
     };
   }, [loadUserData]);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    const { error } = await supabase.auth.signInWithPassword({
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
     });
-    return !error;
+    if (error) return { success: false, error: "Invalid email or password" };
+
+    // Block sign-in for accounts the admin has disabled
+    if (data.user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("account_status")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      if (profile?.account_status === "disabled") {
+        await supabase.auth.signOut();
+        setCurrentUser(null);
+        setSession(null);
+        return {
+          success: false,
+          error: "This account has been disabled by the administrator. Please contact support at Securevaultbank.info@gmail.com.",
+        };
+      }
+    }
+    return { success: true };
   };
 
   const register = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {

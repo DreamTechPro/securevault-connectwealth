@@ -42,8 +42,8 @@ const Register = () => {
 
       // Auto-login after a brief delay
       setTimeout(async () => {
-        const success = await login(normalizedEmail, password);
-        if (success) {
+        const result = await login(normalizedEmail, password);
+        if (result.success) {
           navigate("/dashboard", { replace: true });
         } else {
           navigate("/", { replace: true });
