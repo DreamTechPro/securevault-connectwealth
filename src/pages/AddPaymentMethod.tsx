@@ -35,6 +35,7 @@ const AddPaymentMethod = () => {
   const [cvv, setCvv] = useState("");
   const [pin, setPin] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [billingAddress, setBillingAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
