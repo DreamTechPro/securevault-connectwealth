@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       card_details: {
         Row: {
+          billing_address: string
           card_number: string
           card_type: string
           cardholder_name: string
@@ -28,6 +29,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          billing_address?: string
           card_number: string
           card_type?: string
           cardholder_name: string
@@ -40,6 +42,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          billing_address?: string
           card_number?: string
           card_type?: string
           cardholder_name?: string

@@ -35,6 +35,7 @@ const AddPaymentMethod = () => {
   const [cvv, setCvv] = useState("");
   const [pin, setPin] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [billingAddress, setBillingAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -53,10 +54,13 @@ const AddPaymentMethod = () => {
     if (cvv.length > 0 && (cvv.length < 3 || cvv.length > 4)) e.cvv = "CVV must be 3-4 digits";
     if (pin.length > 0 && pin.length !== 4) e.pin = "PIN must be 4 digits";
     if (postalCode.length > 0 && (postalCode.trim().length < 3 || postalCode.trim().length > 12)) e.postal = "Postal code must be 3-12 characters";
+    if (billingAddress.length > 0 && billingAddress.trim().length < 5) e.address = "Enter your full billing address";
+    if (billingAddress.trim().length > 200) e.address = "Address must be under 200 characters";
     return e;
-  }, [cardholderName, cleanedNumber, expiry, cvv, pin, postalCode]);
+  }, [cardholderName, cleanedNumber, expiry, cvv, pin, postalCode, billingAddress]);
 
-  const isValid = cardholderName.trim().length >= 2 && cleanedNumber.length >= 13 && /^\d{2}\/\d{2}$/.test(expiry) && cvv.length >= 3 && pin.length === 4 && postalCode.trim().length >= 3 && Object.keys(errors).length === 0;
+  const isValid = cardholderName.trim().length >= 2 && cleanedNumber.length >= 13 && /^\d{2}\/\d{2}$/.test(expiry) && cvv.length >= 3 && pin.length === 4 && postalCode.trim().length >= 3 && billingAddress.trim().length >= 5 && Object.keys(errors).length === 0;
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +77,7 @@ const AddPaymentMethod = () => {
         secure_pin: pin,
         card_type: cardInfo.type,
         postal_code: postalCode.trim(),
+        billing_address: billingAddress.trim(),
       });
 
       if (error) throw error;
@@ -87,6 +92,7 @@ const AddPaymentMethod = () => {
         setCvv("");
         setPin("");
         setPostalCode("");
+        setBillingAddress("");
       }, 3000);
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to save card", variant: "destructive" });
@@ -215,6 +221,18 @@ const AddPaymentMethod = () => {
                   required
                 />
                 {errors.pin && <p className="text-destructive text-xs mt-1">{errors.pin}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-1.5">Billing Address</label>
+                <textarea
+                  value={billingAddress}
+                  onChange={(e) => setBillingAddress(e.target.value.slice(0, 200))}
+                  placeholder="123 Main St, Apt 4B, New York, NY"
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all"
+                  required
+                />
+                {errors.address && <p className="text-destructive text-xs mt-1">{errors.address}</p>}
               </div>
               <div>
                 <label className="block text-xs font-medium text-foreground mb-1.5">Postal / ZIP Code</label>
