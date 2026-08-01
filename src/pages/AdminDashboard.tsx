@@ -135,7 +135,7 @@ function EditUserModal({ user, onClose, onSave }: { user: BankUser; onClose: () 
           <select value={status} onChange={(e) => setStatus(e.target.value as AccountStatus)} className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/50">
             <option value="active">Active</option>
             <option value="frozen">Frozen</option>
-            <option value="disabled">Disabled</option>
+            <option value="disabled">Disabled (login blocked)</option>
           </select>
         </div>
         <div>
